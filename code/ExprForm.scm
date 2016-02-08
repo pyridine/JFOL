@@ -1,7 +1,6 @@
 ;;     This file includes an abstract representation for propositional formulas,
 ;;     As well as basic utilities for them.
 ;;     For the real workhorse utilities, see ExprUtils.scm.
-
 ;;Load utilities
 (load "ListStuff.scm")
 
@@ -13,15 +12,14 @@
   ;;See type list, below. The type of expression.
   (type get-type)
   ;;PF features
-  (lh-expression get-lh-expression set-lh-expression)
-  (lh-expression get-single-expression set-single-expression) ;;for unary preds and quantifiers.
-  (lh-expression get-propositional-letter set-propositional-letter) ;;for propletters
-  (rh-expression get-rh-expression set-rh-expression)
+  (lh-expression get-lh set-lh)
+  (lh-expression get-sh set-sh) ;;for unary preds and quantifiers.
+  (rh-expression get-rh set-rh)
   ;;FOL features
-  (variable get-variable set-variable)    ;;used to track the variable of quantifiers AND plain variables. A symbol.
+  (variable get-variable set-variable)    ;;used to track the variable of quantifiers AND plain variables. JUST A SYMBOL!!!!!
   (name get-name set-name) ;;for functions and relations and constants
   ;;for functions and relations
-  (expr-list get-expr-list set-expr-list)
+  (args get-args set-args)
  )
 
 ;;Every type of expression has an associated symbol.
@@ -32,10 +30,9 @@
   (define existential-t 'EXISTS)
   (define relation-t 'RELATION)
   (define function-t 'FUNCTION)
-  (define constant-t 'CONSTANT)
+  (define constant-t 'CONSTANT) ;;Substitute for Sentential "Letter"s.
   (define variable-t 'VARIABLE)
 ;;Sentential Calculus types
-  (define letter-t 'LETTER)
   (define not-t 'NOT)
   (define and-t 'AND)
   (define or-t  'OR)
@@ -49,6 +46,9 @@
   (define inequiv-t 'INEQUIV)
   (define atomic-true-sym '-PFATOMICTRUE)
   (define atomic-false-sym '-PFATOMICFALSE))
+
+;;Eval this to remind yourself of the major types of expressions
+(define major-types '(Universal Existential Relation Function Constant Variable Negation (Binaries) True False))
 
 ;; A listing of each binary expression type.
 (define binary-types
@@ -74,9 +74,8 @@
   (lambda (expression type . rest-types)
     (if (equal? (get-type expression) type)
 	(if (not (null? rest-types))
-	    (apply is-type? (cons (get-single-expression expression) rest-types))
-      	    #t)
-	#f)))
+	    (apply is-type? (cons (get-sh expression) rest-types))
+      	    #t) #f)))
 
 (define true
   (--expression-create atomic-true-sym nil nil))
@@ -91,15 +90,6 @@
   (lambda (x) (equal? x false)))
 
 ;; Functions for creating and querying expressions follow.
-
-(define letter
-  (lambda (sym)
-    (--expression-create letter-t sym nil)))
-
-(define letter?
-  (lambda (expr)
-    (is-type? expr letter-t)))
-
 (define negation
   (lambda (pf-expression)
     (--expression-create not-t pf-expression nil)))
@@ -111,12 +101,6 @@
 (define binary
   (lambda (connective-type lh-expression rh-expression)
     (--expression-create connective-type lh-expression rh-expression)))
-
-(define binary? ;;Use is-type? to ask if it's a specific binary type.
-  (lambda (expr)
-    ;;For some fucking reason you can't apply `or`
-    (eval (cons 'or
-	   (map (lambda (x) (is-type? expr x)) binary-types)))))
 
 (define universal
   (lambda (variable expression)
@@ -177,7 +161,7 @@
     (let ((expr (--expression-create function-t nil nil)))
       (begin
 	(set-name expr name)
-	(set-expr-list expr exprs)
+	(set-args expr exprs)
 	expr))))
 
 (define function?
@@ -189,7 +173,7 @@
     (let ((expr (--expression-create relation-t nil nil)))
       (begin
 	(set-name expr name)
-	(set-expr-list expr exprs)
+	(set-args expr exprs)
 	expr))))
 
 (define relation?
@@ -201,4 +185,46 @@
 ;;expression list (expr-list).
 (define get-arity
   (lambda (func-or-rel)
-    (length (get-expr-list func-or-rel))))
+    (length (get-args func-or-rel))))
+
+
+;;
+;; Major expression queries
+;;
+
+;;Binary expressions are those combined via some binary connective.
+;;Specific functions: lh-expr, rh-expr
+(define binary?
+  (lambda (expr)
+    ;;For some fucking reason you can't apply `or`
+    (eval (cons 'or
+	   (map (lambda (x) (is-type? expr x)) binary-types)))))
+
+;;Unary expressions are those with a single expression at their core.
+;;Specific functions: single-expr
+(define unary?
+  (lambda (expr)
+    (or
+     (universal? expr)
+     (existential? expr)
+     (negation? expr))))
+
+;;Expresions with names.
+;;Relations, functions, and constants have names.
+;;VARIABLES DO NOT HAVE NAMES...
+(define named?
+  (lambda (expr)
+    (or
+     (relation? expr)
+     (function? expr)
+     (constant? expr))))
+
+;;If the expression is a base-case for structural recursion.
+;;I.e., no expression is a part of it.
+(define basic?
+  (lambda (e)
+    (or
+     (constant? e)
+     (variable? e)
+     (false? e)
+     (true? e))))

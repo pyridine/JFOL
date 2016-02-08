@@ -78,8 +78,8 @@
      (and
       (is-type? pform pf-not-sig)
       (or                                      ;;trivial expansions 2 and 2: not T, not F.
-       (equal? atomic-true  (get-single-expression pform))
-       (equal? atomic-false  (get-single-expression pform)))))))
+       (equal? atomic-true  (get-sh pform))
+       (equal? atomic-false  (get-sh pform)))))))
 
 ;;Returns a list of every X such that ~X is in lefts and X is in rights.
 ;;Left and right must be lists of propositional sentences.
@@ -89,7 +89,7 @@
   (lambda (lefts rights forbid)
     ;;for some reason, letrec makes this fuck up completely. I suppose because the order matters.
     (let ((leftnegs (elements-satisfying (lambda (p) (is-type? p pf-not-sig)) lefts)))
-      (let ((negateds (map get-single-expression leftnegs)))
+      (let ((negateds (map get-sh leftnegs)))
 	(let ((searchterms  (list-difference negateds forbid)))
 	  (list-intersect searchterms rights))))))
 
@@ -109,9 +109,9 @@
       (if (null? disj)
 	  (if (null? conj)
 	      (if (is-type? pform pf-not-sig)
-		  (let ((pform2 (get-single-expression pform)))
+		  (let ((pform2 (get-sh pform)))
 		    (cond
-		     ((is-type? pform2 pf-not-sig) (get-single-expression pform2))
+		     ((is-type? pform2 pf-not-sig) (get-sh pform2))
 		     ((true? atomic-true pform2) false)
 		     ((false? pform2) true)
 		     (else nil)))
@@ -140,10 +140,10 @@
      ((is-type? pform not-t not-t) expansion-type-nn)
      ((and
        (is-type? pform not-t)
-       (false? (get-single-expression pform)) expansion-type-nftt ))
+       (false? (get-sh pform)) expansion-type-nftt ))
      ((and
        (is-type? pform not-t)
-       (equal? atomic-true (get-single-expression pform)) expansion-type-nttf ))
+       (equal? atomic-true (get-sh pform)) expansion-type-nttf ))
      ((not (null? (disjunctive-components pform))) expansion-type-b)
      ((not (null? (conjunctive-components pform))) expansion-type-a)
      (else 'ERRROOORRRRRR))))
@@ -268,7 +268,7 @@
 			  (list (cond
 				 ;;~~X -> X
 				 ((equal? exptype expansion-type-nn)
-				  (get-single-expression (get-single-expression expander)))
+				  (get-sh (get-sh expander)))
 				 ;;~T -> F
 				 ((equal? exptype expansion-type-nttf)  atomic-false)
 				 ;;~F -> T
