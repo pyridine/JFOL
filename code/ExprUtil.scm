@@ -6,6 +6,18 @@
 ;;======================================;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;Is the expression a term?
+;;[A term is: ]
+(define term?
+  (lambda (e)
+    (or
+     (is-type? e variable-t)
+     (is-type? e constant-t)
+     (and (is-type? e function-t)
+	  ;;Macros aren't first-order!!!! :(
+	  (eval (cons 'or
+		      (map (lambda (x) (term? x)) (get-args e))))))))
+
 ;;A literal is a propositional letter or its negation, or a constant, T or F.
 (define literal?
   (lambda (pform)
@@ -30,7 +42,10 @@
 	 ((basic? x2) #f)
 	 ((unary? x2) (occurs-in x1 (get-sh x2)))
 	 ((binary? x2) (or (occurs-in x1 (get-lh x2))
-			   (occurs-in x1 (get-rh x2))))))))
+			   (occurs-in x1 (get-rh x2))))
+	 ((or (function? x2) (relation? x2))
+	     ;;Why aren't macros first-order?!
+	     (eval (cons 'or (map (lambda (le) (occurs-in x1 le)) (get-args x2)))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
@@ -153,6 +168,7 @@
 			     )))))
       (sym-iterator 'X 1))))
 
+;;Finds the replacement for a single variable expression.
 (define substitute-variable
   (lambda (variable substitution)
     (let ((rep (assv (get-variable variable) substitution)))
@@ -163,6 +179,14 @@
   (lambda (sub var)
     (remove-if (lambda (x) (equal? (car x) var)) sub)))
 
+;;Adds a variable-expression pair to a substitution.
+(define substitution-support
+  (lambda (var exp sub)
+    (let ((sym (if (symbol? var) var (get-variable var)))) ;;Doesn't matter if you pass a symbol or a variable.
+      (cons (cons sym exp) sub))))
+
+
+;;Applies a substitution to an expression.
 (define apply-substitution
   (lambda (s sub)
     (cond
@@ -176,11 +200,11 @@
      ((universal? s)
       (universal (get-variable s)
 		 (apply-substitution (get-sh s)
-				     (substitution-unsupport (get-variable s) sub))))
+				     (substitution-unsupport sub (get-variable s)))))
      ((existential? s)
       (existential (get-variable s)
 		   (apply-substitution (get-sh s)
-				       (substitution-unsupport (get-variable s) sub))))
+				       (substitution-unsupport sub (get-variable s)))))
      ((binary? s)
       (binary (get-type s)
 	      (apply-substitution (get-lh s) sub)
@@ -198,12 +222,46 @@
 		    (lambda (s) (apply-substitution s sub))
 		    (get-args s))))))))
 
+;;For easily mapping a substitution over terms.
+(define substitution-applier
+  (lambda (sub . exprs)
+    (map (lambda (x) (apply-substitution x sub)) exprs)))
+
+;;Returns a function that substitutes one expression.
+(define substitutor
+  (lambda (substitution)
+    (lambda (expression) (apply-substitution expression substitution))))
+
+(define list-substitution-support
+  (lambda (sub)
+    (map (lambda (x) (car x)) sub)))
+
+;;Combines substitutions:
+;;Specifically, d1d2 is:
+;;   { x1/(t1d2) x2/(t2d2) ... xn/(tnd2), z1/(z1d2) .... zn/(znd2) }, where z are variables suporrted by d2 and not d1.
+(define compose-substitutions
+  (lambda (d1 d2) 
+    (let  ((d1-support (list-substitution-support d1))) 
+      ;;3. Add those substitutions of d2 whose variables are not in the support of d1
+      (append
+       (remove-if (lambda (x) (member? (car x) d1-support)) d2)
+       ;;2. Remove any substitution that has degenerated into x/x
+       (remove-if
+	(lambda (single-sub)
+	  (equal? (variable (car single-sub)) (cdr single-sub))) ;;(car is always a variable symbol, cdr is always an expression)
+	;;1. Apply d2 to all of d1's replacement terms
+	(map (lambda (single-sub)
+	       (cons
+		(car single-sub)
+		(apply-substitution (cdr single-sub) d2)))
+	     d1))))))
 
 ;;Returns the location of the disagreement pair between two ``terms``.
 ;;If there is no disagreement, returns #f.
 ;;A term location is a list (n1 n2 n3 ... nn) of numbers, where each
 ;;  number is which index to descend in while traversing the terms.
-;;[terms = variables, constants, and functions of other terms.]
+;;[terms = variables, constants, and functions of other terms.
+;; NOT... RELATIONS...!!!!!]
 (define disagreement-pair
   (letrec ((recur
 	    (lambda (t1 t2 location-so-far)
@@ -215,8 +273,7 @@
 		   ((is-type? t1 constant-t)
 		    (if (equal? (get-name t1) (get-name t2))
 			#f              ;;Agreement on constant
-			location-so-far);;Disagreement on constant
-		    )
+			location-so-far));;Disagreement on constant
 		   ((is-type? t1 variable-t)
 		    (if (equal? (get-variable t1)
 				(get-variable t2))
@@ -227,12 +284,11 @@
 			 (not (equal? (get-name t1) (get-name t2)))
 			 (not (equal? (get-arity t1) (get-arity t2))))
 			location-so-far ;;Disagreement on function arity/name.
-			;;Otherwise, choose the first disagreement.
 			(let ((disagreements
 			       (map (lambda (one two) (disagreement-pair one two))
 				    (get-args t1) (get-args t2) )))
 			  (let ((numbered-disagreements (add-counters disagreements)))
-			    (let ((first-disagreement
+			    (let ((first-disagreement ;;Choose the first disagreement
 				   (first-member
 				    (lambda (x) (not (equal? (car x) #f)))
 				    numbered-disagreements)))
@@ -241,8 +297,7 @@
 				     ;;Disagreement on function
 				  (append location-so-far
 					  (list (cdr first-disagreement)) ;;its term number
-					  (car first-disagreement) ;;its disagreement path
-					  ))))))))))))
+					  (car first-disagreement)))))))))))));;its disagreement path
     (lambda (term1 term2)
       (recur term1 term2 '()))))
 
@@ -274,11 +329,41 @@
 			  (let ((var-to-sub  (get-variable (if (is-type? s1d variable-t) s1d s2d)))
 				(term-to-rep (if (is-type? s1d variable-t) s2d s1d)))
 			    (if (occurs-in (variable var-to-sub) term-to-rep)
-				"Infrep Failure" ;;Failure; would result in infinite replacement(?)
+				"Variable Reoccurrence Failure" ;;Failure; would result in infinite replacement(?)
 				(recur s1 s2 (cons (cons var-to-sub term-to-rep) csub)))))))))))
     (lambda (s1 s2)
-      (recur s1 s2 '())
-      )))
+      (if (and (term? s1) (term? s2))
+	  (recur s1 s2 '())
+	  "ATTEMPT TO UNIFY TWO NON-TERMS"))))
+
+(define substitution?
+  (lambda (s)
+    (and
+     (list? s)
+     (eval (cons 'and
+		 (map (lambda (x)
+			(and (pair? x) (symbol? (car x)) (expression? (cdr x))))
+		      s))))))
+
+;;Creates a substitution that unifies n sentences.
+;;Garaunteed to result in the most general unifier, if it unifies at all.
+;;[see fitting, 158]
+(define unify
+  (letrec  ((recur
+	     (lambda (csub first second . rest) ;;current substitution, first term, second term, rest of the terms.
+	       (let ((nsub (unify-2 first second)))
+		 (if (not (substitution? nsub)) ;;unify-2 returns an error string if it fails.
+		     (string-append nsub " ->" (print-pf first) ":" (print-pf second) " [" (print-sub csub) "]") ;;Describe the error
+		     (let  ((cnsub (compose-substitutions csub nsub)))
+		       (if (null? rest)
+			   cnsub                                        ;;Success!
+			   (apply recur                                 ;;Add a unification that encompasses the next term.
+				  (append (list cnsub
+						(apply-substitution first nsub ) ;;first has already been substituted with csub
+						(apply-substitution (car rest) cnsub));;We apply the full changes to the next term.
+					  (cdr rest))))))))))
+    (lambda (first second . rest)
+      (apply recur (append (list '() first second) rest)))))
   
 
 ;;A string represerntation of a propositional formula.

@@ -1,35 +1,45 @@
 (load "ExprUtil.scm")
 
 (define ta (constant 'A))
-(define nta (negation ta))
-
 (define tb (constant 'B))
-(define ntb (negation tb))
-
 (define tc (constant 'C))
-(define ntc (negation tc))
-
 (define td (constant 'D))
-(define ntd (negation td))
+
+(define vx (variable 'X))
+(define vy (variable 'Y))
+(define vz (variable 'Z))
+(define vr (variable 'R))
+(define vw (variable 'W))
+(define vu (variable 'U))
+
+(define jerry (constant 'JERRY))
+(define beth (constant 'BETH))
+(define summer (constant 'SUMMER))
+(define mary (constant 'MARY))
+(define bob (constant 'BOB))
+(define dog (constant 'DOG))
+(define cat (constant 'CAT))
+
+
+(define u1 (func 'FUNC beth vy jerry))
+(define u2 (func 'FUNC beth (func 'LAMBDA vw mary) jerry))
+(define u3 (func 'FUNC vr (func 'LAMBDA vw mary) jerry))
+(define u4 (func 'FUNC vr (func 'LAMBDA vu mary) jerry))
 
 (define fol1
-  (all 'X (exists 'Y (relation 'Loves (variable 'Y) (variable 'X)))))
+  (all 'X (exists 'Y (relation 'Loves vx vy))))
 
 (define fol2
   (all 'X
    (exists 'Y
-    (relation 'Fucks (variable 'W) (variable 'R)))))
+    (relation 'Hates vw vr))))
 
 (define fol3
-  (all 'A
-       (exists 'B
+  (all 'X
+       (exists 'Y
 	       (binary 'IMP
-		       (exists 'C (relation 'LOVES  (constant 'mary) (variable 'C)))
-		       (relation 'EATS (constant 'dog) (variable 'A))))))
-  ;;not (A and not A)
-(define taut1
-  (negation
-   (binary 'AND ta nta)))
+		       (exists 'W (relation 'LOVES  mary vx))
+		       (relation 'EATS dog vy)))))
 
 ;;proof by cases
 (define taut2
@@ -71,7 +81,6 @@
     (binary 'IMP ta tb)
     (binary 'IMP tb tc))
     (binary 'IMP ta tc)))
-
 
 ;;Should have a disagreement pair with d2
 (define d1

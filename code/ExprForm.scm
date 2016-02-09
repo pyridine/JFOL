@@ -8,7 +8,7 @@
 ;;http://srfi.schemers.org/srfi-9/srfi-9.html
 (define-record-type expression
   (--expression-create type lh-expression rh-expression)
-  pf-expression?
+  expression?
   ;;See type list, below. The type of expression.
   (type get-type)
   ;;PF features
