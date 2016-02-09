@@ -85,6 +85,41 @@
   (lambda (formula)
     (--internal-components formula #f)))
 
+;;The list of variables that actually occur in an expression.
+;;EG: All[X](Loves(Mary,Y)) will return (Y)
+(define list-variables-instantiated
+  (lambda (e)
+    (cond
+     ((variable? e) (list (get-variable e)))
+     ((basic? e) '())
+     ((or (existential? e) (universal? e))
+      (list-variables (get-sh e)))
+     ((binary? e)
+      (append (list-variables (get-rh e))
+	      (list-variables (get-lh e))))
+     ((negation? e)
+      (list-variables (get-sh e)))
+     ((or (function? e) (relation? e))
+      (raise-list (append
+		  (map list-variables (get-args e))))))))
+
+;;The list of variables that quantifiers scope over in an expression.
+;;EG: All[X]Exists[Z](Loves(M,Y)) will return (X Z)
+(define list-variables-scoped
+  (lambda (e)
+    (cond
+     ((basic? e) '())
+     ((or (existential? e) (universal? e))
+      (cons (get-variable e)
+	    (list-variables (get-sh e))))
+     ((binary? e)
+      (append (list-variables (get-rh e))
+	      (list-variables (get-lh e))))
+     ((negation? e)
+      (list-variables (get-sh e)))
+     ((or (function? e) (relation? e))
+      (raise-list(append
+	(map list-variables (get-args e))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
@@ -92,7 +127,7 @@
 ;;======================================;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define replace-variable
+(define substitute-variable
   (lambda (variable substitution)
     (let ((rep (assv (get-variable variable) substitution)))
       (if rep (cdr rep) variable))))
@@ -109,7 +144,7 @@
        (true? s)
        (false? s)
        (constant? s)) s)
-     ((variable? s) (replace-variable s sub)) ;;The important Line
+     ((variable? s) (substitute-variable s sub)) ;;The important Line
      ((negation? s)
       (negation (apply-substitution (get-sh s) sub)))
      ((universal? s)
@@ -180,3 +215,5 @@
 	      "(" (print-pf (get-lh in))
 	      " " (symbol->string (get-type in)) " "
 	          (print-pf (get-rh in))")"))))))
+
+(define pe print-pf) ;;I type this too much

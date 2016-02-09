@@ -1,21 +1,37 @@
 (load "ExprUtil.scm")
 
-(define ta (letter 'A))
+
+
+(define ta (constant 'A))
 (define nta (negation ta))
 
-(define tb (letter 'B))
+(define tb (constant 'B))
 (define ntb (negation tb))
 
-(define tc (letter 'C))
+(define tc (constant 'C))
 (define ntc (negation tc))
 
-(define td (letter 'D))
+(define td (constant 'D))
 (define ntd (negation td))
 
 (define fol1
   (all 'X
    (exists 'Y
     (relation 'Loves (list (variable 'Y) (variable 'X))))))
+
+(define fol2
+  (all 'X
+   (exists 'Y
+    (relation 'Fucks (list (variable 'W) (variable 'R))))))
+
+(define fol3
+  (all 'A
+       (exists 'B
+	       (binary 'IMP
+		       (exists 'C (relation 'LOVES (list (constant 'mary)) (variable 'C)))
+		       (relation 'EATS (list (constant 'dog) (variable 'A)))))
+       )
+  )
 
 ;;not (A and not A)
 (define taut1

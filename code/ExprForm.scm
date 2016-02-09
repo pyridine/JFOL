@@ -155,26 +155,40 @@
   (lambda (expr)
     (is-type? expr constant-t)))
 
-;;takes a name and a list of expressions
-(define function
-  (lambda (name exprs)
-    (let ((expr (--expression-create function-t nil nil)))
-      (begin
-	(set-name expr name)
-	(set-args expr exprs)
-	expr))))
+;;Don't use this.
+;;Because creating a function and a relation is essentially the same thing,
+;;I provide this higher function...
+(define --function-or-relation
+  (lambda (type name first . rest)
+    (let ((newfunc (--expression-create type nil nil)))
+      (letrec ((recurse-arguments
+		(lambda (first . rest)
+		  ;;recursively append expressions to newfunc's arguements.
+		  (begin
+		    (set-args newfunc (cons first (get-args newfunc)))
+		    (if (not-null? rest)
+			(apply recurse-arguments rest)
+			newfunc
+			)))))
+	(begin
+	  (set-name newfunc name)
+	  (set-args newfunc '())
+	  (apply recurse-arguments (cons first rest))
+	  newfunc)))))
 
+(define function
+  (lambda (name first . rest)
+    (apply --function-or-relation (cons function-t
+					(cons name
+					      (cons first rest))))))
+(define relation
+  (lambda (name first . rest)
+    (apply --function-or-relation (cons relation-t
+					(cons name
+					      (cons first rest))))))
 (define function?
   (lambda (expr)
     (is-type? expr function-t)))
-
-(define relation
-  (lambda (name exprs)
-    (let ((expr (--expression-create relation-t nil nil)))
-      (begin
-	(set-name expr name)
-	(set-args expr exprs)
-	expr))))
 
 (define relation?
   (lambda (expr)
