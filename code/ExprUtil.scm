@@ -21,6 +21,17 @@
 	     #f))
      #f)))
 
+;;Does expression 1 occur in expression 2?
+(define occurs-in
+  (lambda (x1 x2)
+    (if (equal? x1 x2)
+	#t
+	(cond
+	 ((basic? x2) #f)
+	 ((unary? x2) (occurs-in x1 (get-sh x2)))
+	 ((binary? x2) (or (occurs-in x1 (get-lh x2))
+			   (occurs-in x1 (get-rh x2))))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
 ;;     DESTRUCTURING PROCEDURES         ;;
@@ -245,11 +256,30 @@
 		       (cdr rest))))))
 
 ;;Creates a substitution that unifies two sentences.
-(define 2nify
-  (lambda (s1 s2)
-    4
-    )
-  )
+;;[see fitting, 156]
+(define unify-2
+  (letrec ((recur
+	    (lambda (s1 s2 csub) ;;sentence 1, sentence 2, current substitution
+	      (let ((ss1 (apply-substitution s1 csub)) ;;"substituted s1"
+		    (ss2 (apply-substitution s2 csub)))
+		(if (equal? ss1 ss2)
+		    csub
+		    (let* ((disagreement-loc (disagreement-pair ss1 ss2))
+			   (s1d (descend-term ss1 disagreement-loc));;"s1 disagreement term"
+			   (s2d (descend-term ss2 disagreement-loc)))
+		      (if (not (or (is-type? s1d variable-t)
+				   (is-type? s2d variable-t)))
+			  ;;If two terms disagree at non-variables, unification is impossible.
+			  "Two nonvar failure"
+			  (let ((var-to-sub  (get-variable (if (is-type? s1d variable-t) s1d s2d)))
+				(term-to-rep (if (is-type? s1d variable-t) s2d s1d)))
+			    (if (occurs-in (variable var-to-sub) term-to-rep)
+				"Infrep Failure" ;;Failure; would result in infinite replacement(?)
+				(recur s1 s2 (cons (cons var-to-sub term-to-rep) csub)))))))))))
+    (lambda (s1 s2)
+      (recur s1 s2 '())
+      )))
+  
 
 ;;A string represerntation of a propositional formula.
 (define print-pf
@@ -274,4 +304,13 @@
 	      " " (symbol->string (get-type in)) " "
 	          (print-pf (get-rh in))")"))))))
 
+;;A textual representation of a substitution
+(define print-sub
+  (lambda (sub)
+    (map
+     (lambda (u)
+       (cons (car u) (print-pf (cdr u))))
+     sub)))
+
 (define pe print-pf) ;;I type this too much
+(define ps print-sub) 
