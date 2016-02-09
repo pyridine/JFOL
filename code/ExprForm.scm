@@ -109,9 +109,6 @@
 	(set-variable expr variable)
 	expr))))
 
-;;Synonyms for universal
-(define all universal)
-(define for-all universal)
 
 (define universal?
   (lambda (expr)
@@ -124,10 +121,6 @@
 	(set-variable expr variable)
 	expr))))
 
-;;Synonyms for existential
-(define some existential)
-(define exists existential)
-(define there-is existential)
 
 (define existential?
   (lambda (expr)
@@ -139,6 +132,7 @@
       (begin
 	(set-variable expr variable)
 	expr))))
+    
 
 (define variable?
   (lambda (expr)
@@ -174,6 +168,7 @@
 	  (set-name newfunc name)
 	  (set-args newfunc '())
 	  (apply recurse-arguments (cons first rest))
+	  (set-args newfunc (reverse (get-args newfunc))) ;; :P
 	  newfunc)))))
 
 (define function
@@ -242,3 +237,31 @@
      (variable? e)
      (false? e)
      (true? e))))
+
+
+;;Given a term location (n1 n2 n3 ... nn),
+;;return the expression that results by diving into a term.
+(define descend-term
+  (lambda (term location)
+    (if (null? location)
+	term
+	(descend-term
+	 (list-ref (get-args term) (car location))
+	 (cdr location)))))
+
+
+;; Synonyms
+
+(define func function)
+(define rel relation)
+
+(define const constant)
+
+(define var variable)
+
+(define some existential)
+(define exists existential)
+(define there-is existential)
+
+(define all universal)
+(define for-all universal)

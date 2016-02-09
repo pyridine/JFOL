@@ -1,7 +1,5 @@
 (load "ExprUtil.scm")
 
-
-
 (define ta (constant 'A))
 (define nta (negation ta))
 
@@ -15,25 +13,20 @@
 (define ntd (negation td))
 
 (define fol1
-  (all 'X
-   (exists 'Y
-    (relation 'Loves (list (variable 'Y) (variable 'X))))))
+  (all 'X (exists 'Y (relation 'Loves (variable 'Y) (variable 'X)))))
 
 (define fol2
   (all 'X
    (exists 'Y
-    (relation 'Fucks (list (variable 'W) (variable 'R))))))
+    (relation 'Fucks (variable 'W) (variable 'R)))))
 
 (define fol3
   (all 'A
        (exists 'B
 	       (binary 'IMP
-		       (exists 'C (relation 'LOVES (list (constant 'mary)) (variable 'C)))
-		       (relation 'EATS (list (constant 'dog) (variable 'A)))))
-       )
-  )
-
-;;not (A and not A)
+		       (exists 'C (relation 'LOVES  (constant 'mary) (variable 'C)))
+		       (relation 'EATS (constant 'dog) (variable 'A))))))
+  ;;not (A and not A)
 (define taut1
   (negation
    (binary 'AND ta nta)))
@@ -78,3 +71,25 @@
     (binary 'IMP ta tb)
     (binary 'IMP tb tc))
     (binary 'IMP ta tc)))
+
+
+;;Should have a disagreement pair with d2
+(define d1
+	  (func 'F
+	   (func 'G
+		 (const 'A)
+		 (var 'X))
+	   (func 'H
+		 (const 'C)
+		 (func 'J
+		       (var 'Y)
+		       (var 'X)))))
+(define d2
+	  (func 'F
+	   (func 'G
+		 (const 'A)
+		 (var 'X))
+	   (func 'H
+		 (const 'C)
+		 (func 'K
+		       (var 'Z)))))
