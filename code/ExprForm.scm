@@ -73,9 +73,11 @@
 (define is-type?
   (lambda (expression type . rest-types)
     (if (equal? (get-type expression) type)
-	(if (not (null? rest-types))
-	    (apply is-type? (cons (get-sh expression) rest-types))
-      	    #t) #f)))
+	(if (null? rest-types)
+      	    #t
+	    (apply is-type? (cons (get-sh expression) rest-types)))
+	#f
+	)))
 
 (define true
   (--expression-create atomic-true-sym nil nil))
@@ -109,7 +111,6 @@
 	(set-variable expr variable)
 	expr))))
 
-
 (define universal?
   (lambda (expr)
     (is-type? expr universal-t)))
@@ -121,7 +122,6 @@
 	(set-variable expr variable)
 	expr))))
 
-
 (define existential?
   (lambda (expr)
     (is-type? expr existential-t)))
@@ -132,7 +132,6 @@
       (begin
 	(set-variable expr variable)
 	expr))))
-    
 
 (define variable?
   (lambda (expr)
@@ -160,10 +159,9 @@
 		  ;;recursively append expressions to newfunc's arguements.
 		  (begin
 		    (set-args newfunc (cons first (get-args newfunc)))
-		    (if (not-null? rest)
-			(apply recurse-arguments rest)
+		    (if (null? rest)
 			newfunc
-			)))))
+			(apply recurse-arguments rest))))))
 	(begin
 	  (set-name newfunc name)
 	  (set-args newfunc '())
@@ -265,3 +263,5 @@
 
 (define all universal)
 (define for-all universal)
+
+(define not negation)

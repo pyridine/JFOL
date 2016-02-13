@@ -20,7 +20,6 @@
 (define dog (constant 'DOG))
 (define cat (constant 'CAT))
 
-
 (define u1 (func 'FUNC beth vy jerry))
 (define u2 (func 'FUNC beth (func 'LAMBDA vw mary) jerry))
 (define u3 (func 'FUNC vr (func 'LAMBDA vw mary) jerry))

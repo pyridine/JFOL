@@ -47,6 +47,7 @@
 	     ;;Why aren't macros first-order?!
 	     (eval (cons 'or (map (lambda (le) (occurs-in x1 le)) (get-args x2)))))))))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
 ;;     DESTRUCTURING PROCEDURES         ;;
@@ -113,6 +114,11 @@
 
 ;;The list of variables that actually occur in an expression.
 ;;EG: All[X](Loves(Mary,Y)) will return (Y)
+;;The list of variables that quantifiers scope over in an expression.
+;;EG: All[X]Exists[Z](Loves(M,Y)) will return (X Z)
+;;WARNING: If a variable occurs both free and bound in the expresion,
+;;this algorithm has no way of differentiating between them.
+;;Make variable names unique before applying this.
 (define list-variables-instantiated
   (lambda (e)
     (cond
@@ -131,6 +137,9 @@
 
 ;;The list of variables that quantifiers scope over in an expression.
 ;;EG: All[X]Exists[Z](Loves(M,Y)) will return (X Z)
+;;WARNING: If a variable occurs both free and bound in the expresion,
+;;this algorithm has no way of differentiating between them.
+;;Make variable names unique before applying this.
 (define list-variables-scoped
   (lambda (e)
     (cond
@@ -147,6 +156,17 @@
       (raise-list(append
 	(map list-variables-scoped (get-args e))))))))
 
+
+;;Returns a list of the free variables in e.
+;;WARNING: If a variable occurs both free and bound in the expresion,
+;;this algorithm has no way of differentiating between them.
+;;Make variable names unique before applying this.
+(define free-variables
+  (lambda (e)
+    (list-difference
+     (list-variables-instantiated e)
+     (list-variables-scoped e))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
 ;;     CONSTRUCTIVE PROCEDURES          ;;
@@ -154,8 +174,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;Given a list of forbidden symbols, returns a symbol that is different from each of them.
-(define new-unique-variable-symbol
-  (lambda (forbidden)
+;;The base-symbol will be appended with a number.
+(define unique-symbol
+  (lambda (base-symbol forbidden)
     (letrec ((sym-iterator
 	      (lambda (symbol count)
 		(letrec ((new-sym (string->symbol
@@ -164,9 +185,19 @@
 				    (number->string count)))))
 		  (if (member? new-sym forbidden)
 			     (sym-iterator symbol (+ count 1))
-			     new-sym
-			     )))))
-      (sym-iterator 'X 1))))
+			     new-sym)))))
+      (sym-iterator base-symbol 1))))
+
+(define list-function-symbols
+  (lambda (e)
+    (cond
+     ((basic? e) '())
+     ((unary? e) (list-function-symbols (get-sh e)))
+     ((binary? e) (append (list-function-symbols (get-lh e))
+			  (list-function-symbols (get-rh e))))
+     ((relation? e) (apply append (map list-function-symbols (get-args e))))
+     ((function? e) (cons (get-name e)
+			  (apply append (map list-function-symbols (get-args e))))))))
 
 ;;Finds the replacement for a single variable expression.
 (define substitute-variable
@@ -365,7 +396,6 @@
     (lambda (first second . rest)
       (apply recur (append (list '() first second) rest)))))
   
-
 ;;A string represerntation of a propositional formula.
 (define print-pf
   (lambda (in)
