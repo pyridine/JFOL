@@ -419,6 +419,50 @@
 	      " " (symbol->string (get-type in)) " "
 	          (print-pf (get-rh in))")"))))))
 
+;;Doesn't fuck with parens. Allows strings to be evaled.
+(define string->true-symbol
+ (lambda (str)
+   (read (open-input-string str))))
+
+;;Evals a string instead of a symbol.
+;;Use with print-expression-evaluable.
+(define eval-string
+  (lambda (str)
+    (eval (string->true-symbol str))))
+
+;;Prints an evaluable AST for an expression.
+(define print-expression-evaluable
+  (lambda (in)
+    (apply string-append
+	   (append
+	    (list "(")
+	    (cond
+	     ;;Base
+	     ((true? in) (list "true"))
+	     ((false? in) (list "false"))
+	     ((constant? in) (list "constant '" (symbol->string (get-name in))))
+	     ((variable? in) (list "variable '" (symbol->string (get-variable in))))
+	     ;;Recursion
+	     ((is-type? in not-t) (list "not " (print-pf (get-sh in))))
+	     ((universal? in) (list "universal (quote " (symbol->string (get-variable in)) ") " (print-expression-evaluable (get-sh in)) " " ))
+	     ((existential? in) (list "existential (quote " (symbol->string (get-variable in)) ") " (print-expression-evaluable (get-sh in)) " " ))
+	     ((function? in)
+	      (append (list "function (quote " (symbol->string (get-name in)) ")")
+		      (map print-expression-evaluable (get-args in))))
+	     ((relation? in)
+	      (append (list "relation (quote " (symbol->string (get-name in)) ")")
+		      (map print-expression-evaluable (get-args in))))
+	     ;;Binary recursion
+	     (else 
+	      (list
+	       "binary "
+	       (symbol->string (get-type in))
+	       " (quote "
+	       (print-expression-evaluable (get-lh in))
+	       ") "
+	       (print-expression-evaluable (get-rh in)))))
+	    (list ")")))))
+
 ;;A textual representation of a substitution
 (define print-sub
   (lambda (sub)
@@ -427,5 +471,6 @@
        (cons (car u) (print-pf (cdr u))))
      sub)))
 
+(define pev print-expression-evaluable)
 (define pe print-pf) ;;I type this too much
 (define ps print-sub) 

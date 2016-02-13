@@ -1,3 +1,5 @@
+;;Special thanks to The Schematics of Computation (1995), chapter 10.
+
 (load "ExprUtil.scm")
 
 (define pattern-variable?
@@ -120,3 +122,26 @@
 (define expr-match?
   (lambda (pattern exp)
     (expr-match-helper pattern exp '())))
+
+;;Takes a pattern, a substitution (one made with expr-match?, I'd hope),
+;;and returns a pattern with all substitutions made.
+;;If all substitutions are filled, you can (eval result) into anX #<expression>!!
+;;That should turn out to be an incredibly powerful procedure.
+;;Basically taken entirely from Schematics of Computation ch 10. Really puts my code to shame :P
+(define expr-pattern-substitute
+  (lambda (pattern substitution)
+    (letrec
+	((replace
+	  (lambda (item)
+	    (cond
+	     ((pattern-variable? item)
+	      (let ((r (assv item substitution)))
+		(if r
+		    (if (symbol? (cdr r))
+			(string->true-symbol (string-append "'" (symbol->string (cdr r)))) ;;otherwise it's an expression.
+			(string->true-symbol (print-expression-evaluable (cdr r))))
+		    item)))
+	     ((list? item)
+	      (replace item))
+	     (else item)))))
+      (map replace pattern))))
