@@ -185,3 +185,44 @@
   (lambda (pred list)
     (filter (lambda (m) (not (pred m))) list)))
 
+;;Doesn't fuck with parens. Allows strings to be evaled.
+(define string->true-symbol
+ (lambda (str)
+   (read (open-input-string str))))
+
+;;Evals a string instead of a symbol.
+;;Use with print-expression-evaluable.
+(define eval-string
+  (lambda (str)
+    (eval (string->true-symbol str))))
+
+;;Given a list of forbidden symbols, returns a symbol that is different from each of them.
+;;The base-symbol will be appended with a number.
+(define unique-symbol
+  (lambda (base-symbol forbidden)
+    (letrec ((sym-iterator
+	      (lambda (symbol count)
+		(letrec ((new-sym (string->symbol
+				   (string-append
+				    (symbol->string symbol)
+				    (number->string count)))))
+		  (if (member? new-sym forbidden)
+			     (sym-iterator symbol (+ count 1))
+			     new-sym)))))
+      (sym-iterator base-symbol 1))))
+
+
+;;Applies the given function onto the argument until the argument no longer changes.
+;;If the function returns #f, this is taken to mean that the function failed to apply.
+(define apply-until-stasis
+  (lambda (function argument)
+    (let ((previous argument)
+	  (next argument))
+      (letrec ((recurse (lambda ()
+			  (begin
+			    (set! previous next)
+			    (set! next (let ((res (function previous))) (if res res previous)))
+			    (if (equal? next previous)
+				next
+				(recurse))))))
+	(recurse)))))

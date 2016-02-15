@@ -211,10 +211,7 @@
 ;;Specific functions: single-expr
 (define unary?
   (lambda (expr)
-    (or
-     (universal? expr)
-     (existential? expr)
-     (negation? expr))))
+    (or (universal? expr) (existential? expr) (negation? expr))))
 
 ;;Expresions with names.
 ;;Relations, functions, and constants have names.

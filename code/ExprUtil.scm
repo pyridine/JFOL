@@ -7,7 +7,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;Is the expression a term?
-;;[A term is: ]
 (define term?
   (lambda (e)
     (or
@@ -15,7 +14,7 @@
      (is-type? e constant-t)
      (and (is-type? e function-t)
 	  ;;Macros aren't first-order!!!! :(
-	  (eval (cons 'or
+	  (eval (cons 'and
 		      (map (lambda (x) (term? x)) (get-args e))))))))
 
 ;;A literal is a propositional letter or its negation, or a constant, T or F.
@@ -46,7 +45,6 @@
 	 ((or (function? x2) (relation? x2))
 	     ;;Why aren't macros first-order?!
 	     (eval (cons 'or (map (lambda (le) (occurs-in x1 le)) (get-args x2)))))))))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
@@ -156,7 +154,6 @@
       (raise-list(append
 	(map list-variables-scoped (get-args e))))))))
 
-
 ;;Returns a list of the free variables in e.
 ;;WARNING: If a variable occurs both free and bound in the expresion,
 ;;this algorithm has no way of differentiating between them.
@@ -172,21 +169,6 @@
 ;;     CONSTRUCTIVE PROCEDURES          ;;
 ;;======================================;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;Given a list of forbidden symbols, returns a symbol that is different from each of them.
-;;The base-symbol will be appended with a number.
-(define unique-symbol
-  (lambda (base-symbol forbidden)
-    (letrec ((sym-iterator
-	      (lambda (symbol count)
-		(letrec ((new-sym (string->symbol
-				   (string-append
-				    (symbol->string symbol)
-				    (number->string count)))))
-		  (if (member? new-sym forbidden)
-			     (sym-iterator symbol (+ count 1))
-			     new-sym)))))
-      (sym-iterator base-symbol 1))))
 
 (define list-function-symbols
   (lambda (e)
@@ -215,7 +197,6 @@
   (lambda (var exp sub)
     (let ((sym (if (symbol? var) var (get-variable var)))) ;;Doesn't matter if you pass a symbol or a variable.
       (cons (cons sym exp) sub))))
-
 
 ;;Applies a substitution to an expression.
 (define apply-substitution
@@ -402,66 +383,23 @@
     (apply string-append 
 	   (cond
 	    ;;Base
-	    ((true? in) (list "TRUE"))
-	    ((false? in) (list "FALSE"))
+	    ((true? in) (list "!True!"))
+	    ((false? in) (list "!False!"))
 	    ((constant? in) (list (symbol->string (get-name in))))
-	    ((variable? in) (list (symbol->string (get-variable in))))
+	    ((variable? in) (list "$" (symbol->string (get-variable in))))
 	    ;;Recursion
-	    ((is-type? in not-t) (list "~" (print-pf (get-sh in))))
-	    ((universal? in) (list "ALL " (symbol->string (get-variable in)) ":[" (print-pf (get-sh in)) "]" ))
-	    ((existential? in) (list "SOME " (symbol->string (get-variable in)) ":[" (print-pf (get-sh in)) "]" ))
+	    ((is-type? in not-t) (list "~(" (print-pf (get-sh in)) ")"))
+	    ((universal? in) (list "All $" (symbol->string (get-variable in)) " [" (print-pf (get-sh in)) "]" ))
+	    ((existential? in) (list "Some $" (symbol->string (get-variable in)) " [" (print-pf (get-sh in)) "]" ))
 	    ((or (function? in)
-		 (relation? in)) (list (symbol->string (get-name in)) "("
-				       (recurse-string print-pf (get-args in) ",") ")"))
+		 (relation? in)) (list  (if (function? in) "f" "r")
+					(symbol->string (get-name in)) "("
+					(recurse-string print-pf (get-args in) ",") ")"))
 	    (else ;;Binary recursion
 	     (list
 	      "(" (print-pf (get-lh in))
 	      " " (symbol->string (get-type in)) " "
 	          (print-pf (get-rh in))")"))))))
-
-;;Doesn't fuck with parens. Allows strings to be evaled.
-(define string->true-symbol
- (lambda (str)
-   (read (open-input-string str))))
-
-;;Evals a string instead of a symbol.
-;;Use with print-expression-evaluable.
-(define eval-string
-  (lambda (str)
-    (eval (string->true-symbol str))))
-
-;;Prints an evaluable AST for an expression.
-(define print-expression-evaluable
-  (lambda (in)
-    (apply string-append
-	   (append
-	    (list "(")
-	    (cond
-	     ;;Base
-	     ((true? in) (list "true"))
-	     ((false? in) (list "false"))
-	     ((constant? in) (list "constant '" (symbol->string (get-name in))))
-	     ((variable? in) (list "variable '" (symbol->string (get-variable in))))
-	     ;;Recursion
-	     ((is-type? in not-t) (list "not " (print-pf (get-sh in))))
-	     ((universal? in) (list "universal (quote " (symbol->string (get-variable in)) ") " (print-expression-evaluable (get-sh in)) " " ))
-	     ((existential? in) (list "existential (quote " (symbol->string (get-variable in)) ") " (print-expression-evaluable (get-sh in)) " " ))
-	     ((function? in)
-	      (append (list "function (quote " (symbol->string (get-name in)) ")")
-		      (map print-expression-evaluable (get-args in))))
-	     ((relation? in)
-	      (append (list "relation (quote " (symbol->string (get-name in)) ")")
-		      (map print-expression-evaluable (get-args in))))
-	     ;;Binary recursion
-	     (else 
-	      (list
-	       "binary "
-	       (symbol->string (get-type in))
-	       " (quote "
-	       (print-expression-evaluable (get-lh in))
-	       ") "
-	       (print-expression-evaluable (get-rh in)))))
-	    (list ")")))))
 
 ;;A textual representation of a substitution
 (define print-sub
@@ -471,6 +409,5 @@
        (cons (car u) (print-pf (cdr u))))
      sub)))
 
-(define pev print-expression-evaluable)
 (define pe print-pf) ;;I type this too much
 (define ps print-sub) 
