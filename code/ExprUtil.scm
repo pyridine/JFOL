@@ -1,5 +1,31 @@
 (load "ExprForm.scm")
 
+;;A HOF used to list components of a FOL expression.
+;;This can't do anything involving the structure the expression is contained in.
+;;See its usage.
+;;Func is a function of a SINGLE expression that returns either #f or <value>,
+;;where <value> is the thing you want strung into the listtttt......
+(define list-excom-by-func
+  (lambda (e func)
+    (let* ((res (func e))
+	   (next-item (if res (list res) '())))
+      (append
+       next-item
+       (cond
+	((basic? e)   '())
+	((unary? e)   (list-excom-by-func (get-sh e) func))
+	((binary? e)  (append (list-excom-by-func (get-rh e) func)
+			      (list-excom-by-func (get-lh e) func)))
+	((or (function? e) (relation? e))
+	 (raise-list
+	  (append
+	   (map (lambda (x) (list-excom-by-func x func)) (get-args e))))))))))
+
+;;A simplified version of the above.
+(define list-excom-by-querget
+  (lambda (e e-query e-getter)
+    (list-excom-by-func e (lambda (x) (if (e-query x) (e-getter x) #f)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
 ;;     BOOLEAN PROCEDURES               ;;
@@ -51,65 +77,6 @@
 ;;     DESTRUCTURING PROCEDURES         ;;
 ;;======================================;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;Return a list of the Alpha/Beta (Conjunctive/Disjunctive) components,
-;;or the empty list if the expression is not an alph or beta expression.
-(define --internal-components
-  (lambda (in want-conjunctive)
-    (cond
-     ;;X,Y
-     ((if want-conjunctive
-	  (or ;;conjunctive conditions
-	   (is-type? in and-t)
-	   (is-type? in not-t nand-t))
-	  (or ;;disjunctive conditions
-	   (is-type? in or-t)
-	   (is-type? in not-t nor-t)))
-      (let ((fin  (if (is-type? in not-t) (get-sh in)in))) 
-	(list (get-lh fin) (get-rh fin))))
-     ;;~X,~Y
-     ((if want-conjunctive
-	  (or ;;conjunctive conditions
-	   (is-type? in nor-t)
-	   (is-type? in not-t or-t))
-	  (or ;;disjunctive conditions
-	   (is-type? in nand-t)
-	   (is-type? in not-t and-t)))
-      (let ((fin  (if (is-type? in not-t) (get-sh in) in))) 
-	(list (negation (get-lh fin)) (negation (get-rh fin)))))
-     ;;X,~Y
-     ((if want-conjunctive
-	  (or ;;conjunctive conditions
-	   (is-type? in notimp-t)
-	   (is-type? in not-t imp-t))
-	  (or ;;disjunctive conditions
-	   (is-type? in revimp-t)
-	   (is-type? in not-t notrevimp-t)))
-      (let ((fin  (if (is-type? in not-t) (get-sh in)in))) 
-	(list (get-lh fin) (negation (get-rh fin)))))
-     ;;~X,Y
-     ((if want-conjunctive
-	  (or ;;conjunctive conditions
-	   (is-type? in notrevimp-t)
-	   (is-type? in not-t revimp-t))
-	  (or ;;disjunctive conditions
-	   (is-type? in imp-t)
-	   (is-type? in not-t notimp-t)))
-      (let ((fin  (if (is-type? in not-t) (get-sh in)in))) 
-	(list (negation (get-lh fin))  (get-rh fin))))
-     ;;Not an Alpha or Beta
-     (else nil))))
-
-;;Alpha formula components.
-(define conjunctive-components
-  (lambda (formula)
-    (--internal-components formula #t)))
-
-;;Beta formula components.
-(define disjunctive-components
-  (lambda (formula)
-    (--internal-components formula #f)))
-
 ;;The list of variables that actually occur in an expression.
 ;;EG: All[X](Loves(Mary,Y)) will return (Y)
 ;;The list of variables that quantifiers scope over in an expression.
@@ -119,19 +86,7 @@
 ;;Make variable names unique before applying this.
 (define list-variables-instantiated
   (lambda (e)
-    (cond
-     ((variable? e) (list (get-variable e)))
-     ((basic? e) '())
-     ((or (existential? e) (universal? e))
-      (list-variables-instantiated (get-sh e)))
-     ((binary? e)
-      (append (list-variables-instantiated (get-rh e))
-	      (list-variables-instantiated (get-lh e))))
-     ((negation? e)
-      (list-variables-instantiated (get-sh e)))
-     ((or (function? e) (relation? e))
-      (raise-list (append
-		  (map list-variables-instantiated (get-args e))))))))
+    (list-excom-by-querget e variable? get-variable)))
 
 ;;The list of variables that quantifiers scope over in an expression.
 ;;EG: All[X]Exists[Z](Loves(M,Y)) will return (X Z)
@@ -140,35 +95,50 @@
 ;;Make variable names unique before applying this.
 (define list-variables-scoped
   (lambda (e)
-    (cond
-     ((basic? e) '())
-     ((or (existential? e) (universal? e))
-      (cons (get-variable e)
-	    (list-variables-scoped (get-sh e))))
-     ((binary? e)
-      (append (list-variables-scoped (get-rh e))
-	      (list-variables-scoped (get-lh e))))
-     ((negation? e)
-      (list-variables-scoped (get-sh e)))
-     ((or (function? e) (relation? e))
-      (raise-list(append
-	(map list-variables-scoped (get-args e))))))))
+    (list-excom-by-querget e quantifier? get-variable)))
 
 ;;Returns a list of the free variables in e.
 ;;WARNING: If a variable occurs both free and bound in the expresion,
 ;;this algorithm has no way of differentiating between them.
 ;;Make variable names unique before applying this.
-(define free-variables
+(define list-free-variables
   (lambda (e)
     (list-difference
      (list-variables-instantiated e)
      (list-variables-scoped e))))
+
+(define list-variables
+  (lambda (e)
+    (list-excom-by-querget e variable? get-variable)))
+
+(define list-constants
+  (lambda (e)
+    (list-excom-by-querget e constant? get-name)))
+
+(define list-function-names
+  (lambda (e)
+    (list-excom-by-querget e function? get-name)))
+
+(define list-relation-names
+  (lambda (e)
+    (list-excom-by-querget e relation? get-name)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
 ;;     CONSTRUCTIVE PROCEDURES          ;;
 ;;======================================;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;Takes a list of premises and a conclusion and conjuncts them together.
+;; P1 & P2 & ... & PN & C
+;;The idea is to derive a contradiction.
+(define argument-to-sentence
+  (lambda (conc . premises)
+    (let ((negonc (make-negation conc)))
+      (if (null? premises)
+	  negonc
+	  (apply string-propositions
+		 (cons negonc premises))))))
 
 (define list-function-symbols
   (lambda (e)
@@ -312,6 +282,22 @@
 					  (car first-disagreement)))))))))))));;its disagreement path
     (lambda (term1 term2)
       (recur term1 term2 '()))))
+
+
+;;A new function symbol for a single expression.
+(define new-function-symbol
+  (lambda (e)
+    (unique-symbol 'FOOFUNCTION (list-function-names e))))
+
+;;A new variable symbol for a single expression.
+(define new-variable-symbol
+  (lambda (e)
+    (unique-symbol 'FOOVARIABLE (list-variables e))))
+
+;;A new variable symbol for a single expression.
+(define new-constant-symbol
+  (lambda (e)
+    (unique-symbol 'FOOCONSTANT (list-constants e))))
 
 ;;Strings any series of propositions together by a single binary connective.
 (define string-propositions

@@ -1,16 +1,64 @@
 ;;Load Propositional Formula stuff
 (load "ExprUtil.scm")
 
-;;Takes a list of premises and a conclusion and conjuncts them together.
-;; P1 & P2 & ... & PN & C
-;;The idea is to derive a contradiction.
-(define argument-to-sentence
-  (lambda (conc . premises)
-    (let ((negonc (make-negation conc)))
-      (if (null? premises)
-	  negonc
-	  (apply string-propositions
-		 (cons negonc premises))))))
+;;Return a list of the Alpha/Beta (Conjunctive/Disjunctive) components,
+;;or the empty list if the expression is not an alph or beta expression.
+(define --internal-components
+  (lambda (in want-conjunctive)
+    (cond
+     ;;X,Y
+     ((if want-conjunctive
+	  (or ;;conjunctive conditions
+	   (is-type? in and-t)
+	   (is-type? in not-t nand-t))
+	  (or ;;disjunctive conditions
+	   (is-type? in or-t)
+	   (is-type? in not-t nor-t)))
+      (let ((fin  (if (is-type? in not-t) (get-sh in)in))) 
+	(list (get-lh fin) (get-rh fin))))
+     ;;~X,~Y
+     ((if want-conjunctive
+	  (or ;;conjunctive conditions
+	   (is-type? in nor-t)
+	   (is-type? in not-t or-t))
+	  (or ;;disjunctive conditions
+	   (is-type? in nand-t)
+	   (is-type? in not-t and-t)))
+      (let ((fin  (if (is-type? in not-t) (get-sh in) in))) 
+	(list (negation (get-lh fin)) (negation (get-rh fin)))))
+     ;;X,~Y
+     ((if want-conjunctive
+	  (or ;;conjunctive conditions
+	   (is-type? in notimp-t)
+	   (is-type? in not-t imp-t))
+	  (or ;;disjunctive conditions
+	   (is-type? in revimp-t)
+	   (is-type? in not-t notrevimp-t)))
+      (let ((fin  (if (is-type? in not-t) (get-sh in)in))) 
+	(list (get-lh fin) (negation (get-rh fin)))))
+     ;;~X,Y
+     ((if want-conjunctive
+	  (or ;;conjunctive conditions
+	   (is-type? in notrevimp-t)
+	   (is-type? in not-t revimp-t))
+	  (or ;;disjunctive conditions
+	   (is-type? in imp-t)
+	   (is-type? in not-t notimp-t)))
+      (let ((fin  (if (is-type? in not-t) (get-sh in)in))) 
+	(list (negation (get-lh fin))  (get-rh fin))))
+     ;;Not an Alpha or Beta
+     (else nil))))
+
+;;Alpha formula components.
+(define conjunctive-components
+  (lambda (formula)
+    (--internal-components formula #t)))
+
+;;Beta formula components.
+(define disjunctive-components
+  (lambda (formula)
+    (--internal-components formula #f)))
+
 
 (define-record-type proof-location
   (make-proof-location line-no disjunct-no)

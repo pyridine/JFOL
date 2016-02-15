@@ -126,6 +126,10 @@
   (lambda (expr)
     (is-type? expr existential-t)))
 
+(define quantifier?
+  (lambda (e)
+    (or (existential? e) (universal? e))))
+
 (define variable
   (lambda (variable)
     (let ((expr (--expression-create variable-t nil nil)))

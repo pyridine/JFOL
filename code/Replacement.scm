@@ -206,7 +206,12 @@
 	                          ;;        (list? item) => (replace item) : (list? item) => (replace item).....
 	                          ;;Don't code tired ladies and gents
 	     (else item)))))
-      (map replace pattern))))
+      (let ((kludge (map replace pattern)))
+	(if (list? kludge)
+	    (if (= 1 (length kludge))
+		(raise-list kludge)
+		kludge)
+	    kludge)))))
 
 ;;Returns the transformed expression or #f if failure to match
 (define apply-pattern-rule
