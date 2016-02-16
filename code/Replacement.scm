@@ -1,7 +1,13 @@
-;;This file defines fundamental procedures for pattern-based expression manipulation.
-;;Special thanks to The Schematics of Computation (1995), chapter 10.
-
-;;;CAVEATS DUE TO SUCK
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   Replacement.scm
+;;;;
+;;;; This file defines fundamental procedures for pattern-based
+;;;; expression manipulation.
+;;;; Special thanks to The Schematics of Computation (1995),
+;;;; chapter 10.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; WARNING
+;; ==============================
 ;;
 ;; Match and Replace patterns unfortunately, do not have the same syntax.
 ;; Here are the differences:
@@ -10,8 +16,9 @@
 ;;      But in a Replace pattern, binary types must be re-quoted: '(binary 'OR (neg ?b) ?a)
 ;;      I believe this also applies to any other cadr-named expression, like quantifiers, relations, functions....
 ;;
-;; Also holy shit use NEG not NOT as negation creator!! shit.
-
+;; Also, remember to use "neg" and not "not" to specify a negation expression.
+;;
+;;
 (load "ExprUtil.scm")
 
 ;; Is the symbol a pattern variable?

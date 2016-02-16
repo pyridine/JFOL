@@ -1,6 +1,17 @@
-;; Preliminary stuff and list utilities I need.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   ListStuff.scm
+;;;;
+;;;; Procedures independent of the logical expresions.
+;;;; Mostly list utilities.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;I like "nil" better than "'()"
 (define nil '())
 
+;;And sometimes I like "null"
+(define null '())
+
+;;Not null?????
 (define not-null?
   (lambda (a)
     (not (null? a))))
@@ -14,6 +25,7 @@
             #t
             (member? item (cdr list))))))
  
+
 ;;Removes all occurence of item from the surface of the list.
 (define remove-all
   (lambda (item list)
@@ -90,16 +102,16 @@
 (define list-intersect
   (lambda (A B)
     (if (null? A)
-	'()
+	null
 	(if (member? (car A) B)
 	    (cons (car A) (list-intersect (cdr A) B))
-	    (list-intersect (cdr A) B)
-	    ))))
+	    (list-intersect (cdr A) B)))))
 
+;;Remove the duplicates from a list.
 (define remove-duplicates
   (lambda (A)
     (if (null? A)
-	'()
+	null
 	(if (member? (car A) (cdr A))
 	    (remove-duplicates (cdr A))
 	    (cons (car A) (remove-duplicates (cdr A)))))))
@@ -221,7 +233,6 @@
 			     (sym-iterator symbol (+ count 1))
 			     new-sym)))))
       (sym-iterator base-symbol 1))))
-
 
 ;;Applies the given function onto the argument until the argument no longer changes.
 ;;If the function returns #f, this is taken to mean that the function failed to apply.

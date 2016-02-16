@@ -1,8 +1,23 @@
-;;WARNING: EACH FUNCTION HERE ASSUMES e IS "NAMED APART" - no two quantifiers use the same variable, and no bound variable is also free.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   Simplification.scm
+;;;;
+;;;; Defines procedures which manipulate expressions to turn
+;;;; them into standard form.
+;;;; See the very end of this file for procedures like
+;;;; "standard-form", which are the culmination of the procedures
+;;;; and rule-sets defined in this file.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;  WARNING!!!
+;;=============================
+;;
+;; EACH FUNCTION HERE ASSUMES INPUT EXPRESSION E IS "NAMED APART" - no two quantifiers use the same variable, and no bound variable is also free.
+;; I have not provided a procedure to "name apart" variables in an expression, so the user must type sentences that way.
+;;
+;; Make sure you uniqueify the variables before combining your argument steps into the single resolution premise.
+;;
 (load "ExprUtil.scm")
 (load "Replacement.scm")
-
-;;See the end of this file for the final procedures.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
@@ -185,7 +200,7 @@
     (if (quantifier? e)
 	(if (existential? e)
 	    (get-variable e)
-	    (first-existentially-quantified-variable (get-sh e)))
+	    (first-existential-variable (get-sh e)))
 	#f)))
 
 ;;Assumes there is in fact a first existential expression,

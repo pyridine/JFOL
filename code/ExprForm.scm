@@ -1,7 +1,18 @@
-;;     This file includes an abstract representation for propositional formulas,
-;;     As well as basic utilities for them.
-;;     For the real workhorse utilities, see ExprUtils.scm.
-;;Load utilities
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;   ExprForm.scm
+;;;;
+;;;; The abstract representation for propositional formulas,
+;;;; as well as a few fundamental procedures and queries.
+;;;;
+;;;; I strongly dislike this representation and believe that
+;;;; it abstracts FOL incredibly poorly. Not only that, but its
+;;;; complicated nature has led to a complication of the codebase,
+;;;; and in turn an increase in the number of bugs in development.
+;;;;
+;;;; But to change it, and to change everything that depends on
+;;;; it, at this stage in the game, would be more work than it's
+;;;; worth. Unfortunately.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (load "ListStuff.scm")
 
 ;;define-record type is specified in SRFI-9, here:
@@ -199,11 +210,6 @@
   (lambda (func-or-rel)
     (length (get-args func-or-rel))))
 
-
-;;
-;; Major expression queries
-;;
-
 ;;Binary expressions are those combined via some binary connective.
 ;;Specific functions: lh-expr, rh-expr
 (define binary?
@@ -238,20 +244,31 @@
      (false? e)
      (true? e))))
 
+;;Is the expression a term?
+(define term?
+  (lambda (e)
+    (or
+     (is-type? e variable-t)
+     (is-type? e constant-t)
+     (and (is-type? e function-t)
+	  ;;Macros aren't first-order!!!! :(
+	  (eval (cons 'and
+		      (map (lambda (x) (term? x)) (get-args e))))))))
 
-;;Given a term location (n1 n2 n3 ... nn),
-;;return the expression that results by diving into a term.
-(define descend-term
-  (lambda (term location)
-    (if (null? location)
-	term
-	(descend-term
-	 (list-ref (get-args term) (car location))
-	 (cdr location)))))
+;;A literal is an atomic formula or its negation. (or true or false...)
+(define literal?
+  (lambda (p)
+    (or
+     (equal? p true)
+     (equal? p false)
+     (is-type? p not-t relation-t) ;;Assuming that the relation is well-formed.
+     (is-type? p relation-t))))
 
+(define non-literal?
+  (lambda (p)
+    (not (literal? p))))
 
 ;; Synonyms
-
 (define func function)
 (define rel relation)
 
