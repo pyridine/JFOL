@@ -128,6 +128,17 @@
 	(strip-quantifiers (get-sh e))
 	e)))
 
+;;This is intended to be used in the following manner:
+;;
+;;Before stripping quantifiers from e (before translating it into CNF),
+;;store these quantifiers with list-variables-scoped.
+;;You can add them back this procedure without modifing the list.
+(define add-universal-quantifiers
+  (lambda (e quantlist)
+    (if (null? quantlist)
+	e
+	(universal (car quantlist) (add-universal-quantifiers e (cdr quantlist))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
 ;;     CONSTRUCTIVE PROCEDURES          ;;
@@ -137,17 +148,17 @@
 ;;A new function symbol for a single expression.
 (define new-function-symbol
   (lambda (e)
-    (unique-symbol 'FOOFUNCTION (list-function-names e))))
+    (unique-symbol 'F (list-function-names e))))
 
 ;;A new variable symbol for a single expression.
 (define new-variable-symbol
   (lambda (e)
-    (unique-symbol 'FOOVARIABLE (list-variables e))))
+    (unique-symbol 'X (list-variables e))))
 
 ;;A new variable symbol for a single expression.
 (define new-constant-symbol
   (lambda (e)
-    (unique-symbol 'FOOCONSTANT (list-constants e))))
+    (unique-symbol 'C (list-constants e))))
 
 ;;Strings any series of propositions together by a single binary connective.
 (define string-propositions
@@ -188,7 +199,7 @@
 	    (else ;;Binary recursion
 	     (list
 	      "(" (print-pf (get-lh in))
-	      " " (symbol->string (get-type in)) " "
+	      ") " (symbol->string (get-type in)) " ("
 	          (print-pf (get-rh in))")"))))))
 
 (define pe print-pf) ;;I type this too much

@@ -59,7 +59,6 @@
   (lambda (formula)
     (--internal-components formula #f)))
 
-
 (define-record-type proof-location
   (make-proof-location line-no disjunct-no)
   proof-location?
@@ -122,12 +121,12 @@
     (or
      (not (null? (conjunctive-components pform)))  ;;expansion 1: alpha formulas
      (not (null? (disjunctive-components pform)))  ;;expansion 2: beta 
-     (is-type? pform pf-not-sig pf-not-sig)    ;;trivial expansion 1: not not
+     (is-type? pform not-t not-t)    ;;trivial expansion 1: not not
      (and
-      (is-type? pform pf-not-sig)
+      (is-type? pform not-t)
       (or                                      ;;trivial expansions 2 and 2: not T, not F.
-       (equal? atomic-true  (get-sh pform))
-       (equal? atomic-false  (get-sh pform)))))))
+       (equal? true  (get-sh pform))
+       (equal? false  (get-sh pform)))))))
 
 ;;Returns a list of every X such that ~X is in lefts and X is in rights.
 ;;Left and right must be lists of propositional sentences.
@@ -136,7 +135,7 @@
 (define get-resolution-pivots-unidirectional
   (lambda (lefts rights forbid)
     ;;for some reason, letrec makes this fuck up completely. I suppose because the order matters.
-    (let ((leftnegs (elements-satisfying (lambda (p) (is-type? p pf-not-sig)) lefts)))
+    (let ((leftnegs (elements-satisfying (lambda (p) (is-type? p not-t)) lefts)))
       (let ((negateds (map get-sh leftnegs)))
 	(let ((searchterms  (list-difference negateds forbid)))
 	  (list-intersect searchterms rights))))))
@@ -156,11 +155,11 @@
 	  (conj (conjunctive-components pform)))
       (if (null? disj)
 	  (if (null? conj)
-	      (if (is-type? pform pf-not-sig)
+	      (if (is-type? pform not-t)
 		  (let ((pform2 (get-sh pform)))
 		    (cond
-		     ((is-type? pform2 pf-not-sig) (get-sh pform2))
-		     ((true? atomic-true pform2) false)
+		     ((is-type? pform2 not-t) (get-sh pform2))
+		     ((true? true pform2) false)
 		     ((false? pform2) true)
 		     (else nil)))
 		  nil)
@@ -191,7 +190,7 @@
        (false? (get-sh pform)) expansion-type-nftt ))
      ((and
        (is-type? pform not-t)
-       (equal? atomic-true (get-sh pform)) expansion-type-nttf ))
+       (equal? true (get-sh pform)) expansion-type-nttf ))
      ((not (null? (disjunctive-components pform))) expansion-type-b)
      ((not (null? (conjunctive-components pform))) expansion-type-a)
      (else 'ERRROOORRRRRR))))
@@ -318,9 +317,9 @@
 				 ((equal? exptype expansion-type-nn)
 				  (get-sh (get-sh expander)))
 				 ;;~T -> F
-				 ((equal? exptype expansion-type-nttf)  atomic-false)
+				 ((equal? exptype expansion-type-nttf)  false)
 				 ;;~F -> T
-				 ((equal? exptype expansion-type-nftt)  atomic-true))))
+				 ((equal? exptype expansion-type-nftt)  true))))
 		      new-line)))))))
 
 (define expansion-type-to-string
@@ -369,7 +368,7 @@
     (let ((line1 (get-formulas (locate-proof-line proof (get-line-1 resolution))))
 	  (line2 (get-formulas (locate-proof-line proof (get-line-2 resolution))))
 	  (pivot (get-pivot resolution))
-	  (~pivot (make-negation (get-pivot resolution))))
+	  (~pivot (neg (get-pivot resolution))))
       (let
 	  ((lineP-ref (if (member? pivot line1) (get-line-1 resolution) (get-line-2 resolution)))
 	   (line~P-ref (if (member? pivot line1) (get-line-2 resolution) (get-line-1 resolution))))
@@ -447,7 +446,6 @@
 		    (print "Exhausted all expansions/resolutions. Proof failed. :(")
 		    proof)))))))
 
-
 ;;resolves a single sentence......
 (define resolve
   (lambda (step1)
@@ -459,4 +457,4 @@
 ;;Prove that a sentence is true
 (define prove
  (lambda (step1)
-   (resolve (make-negation step1))))
+   (resolve (neg step1))))

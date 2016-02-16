@@ -229,6 +229,16 @@
 	  (eval (expr-pattern-substitute replace-pattern match))
 	  #f))))
 
+;;If the exprsesion matches, returns the substitution over each replace pattern in the list.
+(define apply-pattern-rule-multi-result
+  (lambda (match-pattern replace-pattern-list expression)
+    (let ((match (expr-match? match-pattern expression)))
+      (if match
+	  (map (lambda (x)
+		 (eval (expr-pattern-substitute x match)))
+	       replace-pattern-list)
+	  #f))))
+
 ;;Applies a single rule not only to the expression itself, but also checks all sub-expressions.
 ;;Returns e even if any match fails.
 ;;Not garaunteed to replace every instance of the pattern. Use apply-pattern-rule-deep-while.
@@ -308,6 +318,16 @@
 	  (if res
 	      res
 	      (apply-pattern-rules-condy (cddr rules) exp))))))
+
+;;applies surface-level rules until one doesn't return #f, and returns the result of that rule.
+(define apply-pattern-rules-condy-multi-result
+  (lambda (rules exp)
+    (if (null? rules)
+	#f
+	(let ((res (apply-pattern-rule-multi-result (car rules) (cadr rules) exp)))
+	  (if res
+	      res
+	      (apply-pattern-rules-condy-multi-result (cddr rules) exp))))))
 
 ;;Repeatedly applies every rule in sequence until the expression no longer changes.
 (define apply-pattern-rules-deep-while
