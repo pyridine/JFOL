@@ -41,6 +41,17 @@
 	    (car list)
 	    (first-member pred (cdr list))))))
 
+;;Returns a ref to the first member of list satisfying pred, or #f if none found.
+(define first-member-ref
+  (lambda (pred list)
+    (letrec ((recurse (lambda (pred list ref)
+			(if (null? list)
+			    #f
+			    (if (pred (car list))
+				ref
+				(recurse pred (cdr list) (+ ref 1)))))))
+      (recurse pred list 0))))
+
 ;;Returns a func of a list. #t if the list contains any member satisfying pred.
 (define a-member-is
   (lambda (predicate)

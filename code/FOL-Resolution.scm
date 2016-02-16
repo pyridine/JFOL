@@ -1,0 +1,5 @@
+;;  FIRST-ORDER LOGIC
+;;
+;;  RESOLUTION
+
+

@@ -43,20 +43,18 @@
 	  (eval (cons 'and
 		      (map (lambda (x) (term? x)) (get-args e))))))))
 
-;;A literal is a propositional letter or its negation, or a constant, T or F.
+;;A literal is an atomic formula or its negation. (or true or false...)
 (define literal?
-  (lambda (pform)
+  (lambda (p)
     (or
-     (equal? pform true)
-     (equal? pform false)
-     (if (is-type? pform constant-t)
-	 #t
-	 (if (is-type? pform not-t)
-	     (if (is-type? (get-sh pform) constant-t)
-		 #t
-		 #f)
-	     #f))
-     #f)))
+     (equal? p true)
+     (equal? p false)
+     (is-type? p not-t relation-t) ;;Assuming that the relation is well-formed.
+     (is-type? p relation-t))))
+
+(define non-literal?
+  (lambda (p)
+    (not (literal? p))))
 
 ;;Does expression 1 occur in expression 2?
 (define occurs-in
@@ -123,11 +121,27 @@
   (lambda (e)
     (list-excom-by-querget e relation? get-name)))
 
+(define strip-quantifiers
+  (lambda (e)
+    (if (quantifier? e)
+	(strip-quantifiers (get-sh e))
+	e)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
 ;;     CONSTRUCTIVE PROCEDURES          ;;
 ;;======================================;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;Strings a list of expressions by a binary sig.
+(define string-proposition-list
+  (lambda (sig list)
+    (if (= (length list) 1)
+	(car list)
+	(if (= (length list) 2)
+	    (binary sig (car list) (cadr list))
+	    (binary sig (car list) (apply string-propositions (cons sig (cdr list))))))))
 
 ;;Takes a list of premises and a conclusion and conjuncts them together.
 ;; P1 & P2 & ... & PN & C

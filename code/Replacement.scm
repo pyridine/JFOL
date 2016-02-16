@@ -7,9 +7,10 @@
 ;; Here are the differences:
 ;;
 ;;   1. In a Match pattern, writing '(binary IMP ?a ?b) is fine.
-;;      But in a Replace pattern, binary types must be re-quoted: '(binary 'OR (not ?b) ?a)
+;;      But in a Replace pattern, binary types must be re-quoted: '(binary 'OR (neg ?b) ?a)
 ;;      I believe this also applies to any other cadr-named expression, like quantifiers, relations, functions....
-
+;;
+;; Also holy shit use NEG not NOT as negation creator!! shit.
 
 (load "ExprUtil.scm")
 
@@ -97,7 +98,7 @@
        ((equal? (car pat) 'constant)
 	(helper-basic-named constant-t get-name pat expr answers))
        ;; NEGATION
-       ((equal? (car pat) 'not)
+       ((equal? (car pat) 'neg)
 	(and (is-type? expr not-t)
 	     (expr-match-helper (cadr pat) (get-sh expr) answers))) ;;Don't forget the cadr! not the cdr! Yeesh.
        ;; BINARIES : We won't strictly check if the pattern has a true binary connective symbol...
@@ -161,7 +162,7 @@
 	     ((constant? in) (list "constant '" (symbol->string (get-name in))))
 	     ((variable? in) (list "variable '" (symbol->string (get-variable in))))
 	     ;;Recursion
-	     ((is-type? in not-t) (list "not " (print-expression-evaluable (get-sh in))))
+	     ((is-type? in not-t) (list "neg " (print-expression-evaluable (get-sh in))))
 	     ((universal? in) (list "universal '" (symbol->string (get-variable in)) " " (print-expression-evaluable (get-sh in)) " " ))
 	     ((existential? in) (list "existential '" (symbol->string (get-variable in)) " " (print-expression-evaluable (get-sh in)) " " ))
 	     ((function? in)
@@ -290,6 +291,16 @@
 	 (cddr rules)
 	 (apply-until-stasis
 	  (lambda (e) (apply-pattern-rule-deep (car rules) (cadr rules) e)) exp)))))
+
+;;applies surface-level rules until one doesn't return #f, and returns the result of that rule.
+(define apply-pattern-rules-condy
+  (lambda (rules exp)
+    (if (null? rules)
+	#f 
+	(let ((res (apply-pattern-rule (car rules) (cadr rules) exp)))
+	  (if res
+	      res
+	      (apply-pattern-rules-condy (cddr rules) exp))))))
 
 ;;Repeatedly applies every rule in sequence until the expression no longer changes.
 (define apply-pattern-rules-deep-while

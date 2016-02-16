@@ -32,7 +32,7 @@
   (define function-t 'FUNCTION)
   (define constant-t 'CONSTANT) ;;Substitute for Sentential "Letter"s.
   (define variable-t 'VARIABLE)
-;;Sentential Calculus types
+;;Sentential Calculus inherited types
   (define not-t 'NOT)
   (define and-t 'AND)
   (define or-t  'OR)
@@ -46,6 +46,7 @@
   (define inequiv-t 'INEQUIV)
   (define atomic-true-sym '-PFATOMICTRUE)
   (define atomic-false-sym '-PFATOMICFALSE))
+;;(define letter-t 'LETTER) ;;This is unused in FOL.
 
 ;;Eval this to remind yourself of the major types of expressions
 (define major-types '(Universal Existential Relation Function Constant Variable Negation (Binaries) True False))
@@ -265,4 +266,4 @@
 (define all universal)
 (define for-all universal)
 
-(define not negation)
+(define neg negation) ;;DON'T FUCKING DEFINE "not" AS NEGATION!!!!!!! YOU OVERRIDE BUILT-IN NOT!
