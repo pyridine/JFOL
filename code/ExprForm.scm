@@ -248,12 +248,23 @@
 (define term?
   (lambda (e)
     (or
-     (is-type? e variable-t)
-     (is-type? e constant-t)
-     (and (is-type? e function-t)
+     (variable? e)
+     (constant? e)
+     (and (function? e)
 	  ;;Macros aren't first-order!!!! :(
 	  (eval (cons 'and
 		      (map (lambda (x) (term? x)) (get-args e))))))))
+
+(define closed-term?
+  (lambda (e)
+    (and
+     (term? e)
+     (not (variable? e))
+     (if (function? e)
+	 (eval (cons 'and
+		     (map closed-term? (get-args e))))
+	 #t)))
+  )
 
 ;;A literal is an atomic formula or its negation. (or true or false...)
 (define literal?

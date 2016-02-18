@@ -54,39 +54,46 @@
 
 ;;Creates a substitution that unifies two sentences.
 ;;[see fitting, 156]
-(define unify-2
-  (letrec ((recur
-	    (lambda (s1 s2 csub) ;;sentence 1, sentence 2, current substitution
-	      (let ((ss1 (apply-substitution s1 csub)) ;;"substituted s1"
-		    (ss2 (apply-substitution s2 csub)))
-		(if (equal? ss1 ss2)
-		    csub
-		    (let* ((disagreement-loc (disagreement-pair ss1 ss2))
-			   (s1d (descend-term ss1 disagreement-loc));;"s1 disagreement term"
-			   (s2d (descend-term ss2 disagreement-loc)))
-		      (if (not (or (is-type? s1d variable-t)
-				   (is-type? s2d variable-t)))
-			  ;;If two terms disagree at non-variables, unification is impossible.
-			  "Two nonvar failure"
-			  (let ((var-to-sub  (get-variable (if (is-type? s1d variable-t) s1d s2d)))
-				(term-to-rep (if (is-type? s1d variable-t) s2d s1d)))
-			    (if (occurs-in (variable var-to-sub) term-to-rep)
-				"Variable Reoccurrence Failure" ;;Failure; would result in infinite replacement(?)
-				(recur s1 s2 (cons (cons var-to-sub term-to-rep) csub)))))))))))
-    (lambda (s1 s2)
-      (if (and (term? s1) (term? s2))
-	  (recur s1 s2 '())
-	  "ATTEMPT TO UNIFY TWO NON-TERMS"))))
+(define unify-two-terms
+  (let ((counter 0))
+    (letrec ((recur
+	      (lambda (s1 s2 csub) ;;sentence 1, sentence 2, current substitution
+		(if (> counter 30)
+		    (begin
+		      (warning "took too long!!")
+		      csub)
+		    (begin
+		      (set! counter (+ counter 1))
+		      (let ((ss1 (apply-substitution s1 csub)) ;;"substituted s1"
+			    (ss2 (apply-substitution s2 csub)))
+			(if (equal? ss1 ss2)
+			    csub
+			    (let* ((disagreement-loc (disagreement-pair ss1 ss2))
+				   (s1d (descend-term ss1 disagreement-loc));;"s1 disagreement term"
+				   (s2d (descend-term ss2 disagreement-loc)))
+			      (if (not (or (is-type? s1d variable-t)
+					   (is-type? s2d variable-t)))
+				  ;;If two terms disagree at non-variables, unification is impossible.
+				  #f
+				  (let ((var-to-sub  (get-variable (if (is-type? s1d variable-t) s1d s2d)))
+					(term-to-rep (if (is-type? s1d variable-t) s2d s1d)))
+				    (if (occurs-in (variable var-to-sub) term-to-rep)
+					#f  ;;Variable to create substitution for occurs in term.
+					(recur s1 s2 (compose-substitutions csub (list (cons var-to-sub term-to-rep)))))))))))))))
+      (lambda (s1 s2)
+	(if (and (term? s1) (term? s2))
+	    (recur s1 s2 '())
+	    #f))))) ;;Can't unify two non-terms.
 
 ;;Creates a substitution that unifies n sentences.
 ;;Garaunteed to result in the most general unifier, if it unifies at all.
 ;;[see fitting, 158]
-(define unify
+(define unify-n-terms
   (letrec  ((recur
 	     (lambda (csub first second . rest) ;;current substitution, first term, second term, rest of the terms.
-	       (let ((nsub (unify-2 first second)))
-		 (if (not (substitution? nsub)) ;;unify-2 returns an error string if it fails.
-		     (string-append nsub " ->" (print-pf first) ":" (print-pf second) " [" (print-sub csub) "]") ;;Describe the error
+	       (let ((nsub (unify-two-terms first second)))
+		 (if (not (substitution? nsub)) ;;unify-two-terms returns an error string if it fails.
+		     #f
 		     (let  ((cnsub (compose-substitutions csub nsub)))
 		       (if (null? rest)
 			   cnsub                                        ;;Success!
@@ -98,6 +105,18 @@
     (lambda (first second . rest)
       (apply recur (append (list '() first second) rest)))))
   
+;;Returns a variable substitution which unifies e1 and e2, or #f if there is none.
+;;I think this is a really clever idea.
+;;We create two new functions (the names don't matter) off of the terms of both expressions,
+;;and we then attempt to unify these two functions! We don't need to write anything new!
+(define unify-two-expressions
+  (lambda (e1 e2)
+    (if (agree-term-locations? e1 e2)
+	(unify-two-terms
+	 (apply function (cons 'Wes-Anderson (list-surface-terms e1)))
+	 (apply function (cons 'Wes-Anderson (list-surface-terms e2))))
+	#f)))
+
 ;;A textual representation of a substitution
 (define print-sub
   (lambda (sub)

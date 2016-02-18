@@ -139,6 +139,42 @@
 	e
 	(universal (car quantlist) (add-universal-quantifiers e (cdr quantlist))))))
 
+
+;;Two expressions agree surface-structurally if they are identical but for
+;;any place where a term must occur.
+;;Terms occur inside relations and nowhere else.
+(define agree-term-locations?
+  (lambda (e1 e2)
+	  (cond
+	   ;;Two terms agree structurally. A term and a non-term do not agree.
+	   ((term? e1) (term? e2))
+	   ;;Two non-terms of different types do not agree.
+	   ((not (equal? (get-type e1) (get-type e2))) #f)
+	   ;;Two negations agree if their expressions agree.
+	   ((negation? e1) (agree-term-locations? (get-sh e1) (get-sh e2)))
+	   ;;Quantifiers agree if they have the same variable and their expressions agree. 
+	   ((or (existential? e1) (universal? e1)) (and (equal? (get-variable e1) (get-variable e2))
+							(agree-term-locations? (get-sh e1) (get-sh e2))))
+	   ;;Two relations agree if they have the same name and arity. (We assume both are well-formed; i.e., they consist of terms.)
+	   ((relation? e1) (and (relation? e2)
+				(equal? (get-name e1) (get-name e2))
+				(equal? (get-arity e1) (get-arity e2))))
+	   ;;Two binaries agree if they are of the same type (checked above) and their expressions agree.
+	   ((binary? e1) (and
+			  (agree-term-locations? (get-lh e1) (get-lh e2))
+			  (agree-term-locations? (get-rh e1) (get-rh e2))))
+	   (else #f))))
+
+(define list-surface-terms
+  (lambda (e)
+    (cond
+     ((term? e) e)
+     ((relation? e) (get-args e))
+     ((unary? e) (list-surface-terms (get-sh e)))
+     ((binary? e) (append (list-surface-terms (get-lh e))
+			  (list-surface-terms (get-rh e)))))))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
 ;;     CONSTRUCTIVE PROCEDURES          ;;
