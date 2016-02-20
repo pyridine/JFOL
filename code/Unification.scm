@@ -58,7 +58,7 @@
   (let ((counter 0))
     (letrec ((recur
 	      (lambda (s1 s2 csub) ;;sentence 1, sentence 2, current substitution
-		(if (> counter 30)
+		(if (> counter 50)
 		    (begin
 		      (warning "took too long!!")
 		      csub)
@@ -85,6 +85,21 @@
 	    (recur s1 s2 '())
 	    #f))))) ;;Can't unify two non-terms.
 
+  
+;;Returns a variable substitution which unifies e1 and e2, or #f if there is none.
+;;I think this is a really clever idea.
+;;We create two new functions (the names don't matter) off of the terms of both expressions,
+;;and we then attempt to unify these two functions! We don't need to write anything new!
+(define unify-two-expressions
+  (lambda (e1 e2)
+    (if (and (term? e1) (term? e2))
+	(unify-two-terms e1 e2)
+	(if (agree-term-locations? e1 e2)
+	    (unify-two-terms
+	     (apply function (cons 'Wes-Anderson (list-surface-terms e1)))
+	     (apply function (cons 'Wes-Anderson (list-surface-terms e2))))
+	    #f))))
+
 ;;Creates a substitution that unifies n sentences.
 ;;Garaunteed to result in the most general unifier, if it unifies at all.
 ;;[see fitting, 158]
@@ -104,18 +119,14 @@
 					  (cdr rest))))))))))
     (lambda (first second . rest)
       (apply recur (append (list '() first second) rest)))))
-  
-;;Returns a variable substitution which unifies e1 and e2, or #f if there is none.
-;;I think this is a really clever idea.
-;;We create two new functions (the names don't matter) off of the terms of both expressions,
-;;and we then attempt to unify these two functions! We don't need to write anything new!
-(define unify-two-expressions
-  (lambda (e1 e2)
-    (if (agree-term-locations? e1 e2)
-	(unify-two-terms
-	 (apply function (cons 'Wes-Anderson (list-surface-terms e1)))
-	 (apply function (cons 'Wes-Anderson (list-surface-terms e2))))
-	#f)))
+
+(define unify-n-expressions
+  (lambda (first second . rest)
+    (apply unify-n-terms
+	   (map (lambda (x)
+		  (apply  function (cons 'Wes-Anderson (list-surface-terms x)))) ;;SOMETHING IS HORRIBLY WRONG WITH THIS.......
+		(cons first (cons second rest))))))
+
 
 ;;A textual representation of a substitution
 (define print-sub

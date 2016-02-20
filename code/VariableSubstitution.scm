@@ -68,6 +68,72 @@
 		    (lambda (s) (apply-substitution s sub))
 		    (get-args s))))))))
 
+
+
+;;This substitution will also replace the quantifier variables.
+;;Requires a list of (symbol . variable-exp) pairs.
+(define apply-variable-renaming
+  (lambda (s sub)
+    (cond
+     ((or
+       (true? s)
+       (false? s)
+       (constant? s)) s)
+     ((variable? s) (substitute-variable s sub)) ;;The important Line
+     ((negation? s)
+      (negation (apply-variable-renaming (get-sh s) sub)))
+     ((universal? s)
+      (universal (get-variable (apply-variable-renaming (variable (get-variable s)) sub))
+		 (apply-variable-renaming (get-sh s)
+				     sub)))
+     ((existential? s)
+      (existential (get-variable (apply-variable-renaming (variable (get-variable s)) sub))
+		   (apply-variable-renaming (get-sh s)
+				       sub)))
+     ((binary? s)
+      (binary (get-type s)
+	      (apply-variable-renaming (get-lh s) sub)
+	      (apply-variable-renaming (get-rh s) sub)))
+    ((relation? s)
+      (apply relation
+	     (cons (get-name s)
+		   (map
+		    (lambda (s) (apply-variable-renaming s sub))
+		    (get-args s)))))
+     ((function? s)
+      (apply function
+	     (cons (get-name s)
+		   (map
+		    (lambda (s) (apply-variable-renaming s sub))
+		    (get-args s))))))))
+
+;;Renames the variables in an expression that occur in the forbidden-list.
+;;Forbid-variables is a list of SYMBOLS.
+(define rename-variables
+  (lambda (e forbid-vars)
+    (let* ((e-vars                (set-union (list-variables-instantiated e) (list-variables-scoped e)))
+	   (forbidden-new-symbols (append forbid-vars e-vars))
+	   (offending-vars (list-intersect e-vars forbid-vars)))
+      (letrec ((recursive-make-renaming-substitution
+		(lambda (varlist forbid)
+		  (if (null? varlist)
+		      null
+		      (let ((newsym (unique-symbol 'X forbid)))
+			(cons
+			 (cons (car varlist) (variable newsym) )
+			 (recursive-make-renaming-substitution (cdr varlist) (cons newsym forbid))))))))
+	(apply-variable-renaming e (recursive-make-renaming-substitution offending-vars forbidden-new-symbols))))))
+
+(define rename-variables-in-list
+  (lambda (e forbid-vars)
+    (if (null? e)
+	'()
+	(let ((newe (rename-variables (car e) forbid-vars)))
+	  (cons
+	   newe
+	   (rename-variables-in-list (cdr e) (append forbid-vars (list-variables newe))))))))
+
+
 ;;For easily mapping a substitution over terms.
 (define substitution-applier
   (lambda (sub . exprs)

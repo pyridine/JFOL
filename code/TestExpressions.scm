@@ -49,3 +49,32 @@
 ;;Although unifiable, unify-two-expressions seems to try forever.
 (define r1 (relation 'R (function 'F2 (variable 'y)) (variable 'y) (variable 'v)))
 (define r2 (relation 'R (variable 'x) (function 'F1 (constant 'C1)) (function 'F (variable 'x) (function 'F1 (constant 'C1)))))
+
+;;An argument
+
+(define argu
+  (list
+   ;;conclusion
+   (relation 'loves (constant 'elsa) (constant 'anna))
+   ;;premises
+   (universal 'x (universal 'y (binary 'IMP (relation 'kisses (variable 'x) (variable 'y)) (relation 'loves (variable 'x) (variable 'y)))))
+   (relation 'kisses (constant 'elsa) (constant 'anna))))
+
+(define foo
+  (list
+   (existential 'x (variable 'x))
+   (existential 'x (relation 'fucking (variable 'x) (constant 'ay)))
+   ))
+
+		
+(define g1
+  (list
+   (relation 'p (variable 'x) (function 'f (variable 'y)))
+   (relation 'p (function 'g (variable 'y)) (function 'f (constant 'a)))
+   (relation 'q (variable 'c) (variable 'z))))
+
+(define g2
+  (list
+   (neg (relation 'p (function 'g (constant 'a)) (variable 'z)))
+   (relation 'r (variable 'x) (constant 'a))))
+

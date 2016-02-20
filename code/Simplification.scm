@@ -277,9 +277,5 @@
   (lambda (e)
     (skolemize (prenex (reduce-connectives e)))))
 
-(define resolution-form
-  (lambda (e)
-    (strip-quantifiers (standard-form e))))
-
 ;;;;INCREDIBLY IMPORTANT NOTE:
 ;;;;   CONVERTING THE SENTENCE TO CNF MIGHT LEAVE IN THE DUST A STEP THAT WAS NECESSARY FOR RESOLUTION!

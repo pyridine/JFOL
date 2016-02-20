@@ -11,7 +11,7 @@
 ;;And sometimes I like "null"
 (define null '())
 
-;;Not null?????
+;;non-null predicate...
 (define not-null?
   (lambda (a)
     (not (null? a))))

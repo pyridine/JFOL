@@ -266,6 +266,13 @@
 	 #t)))
   )
 
+(define atomic?
+  (lambda (e)
+    (or
+     (true? e)
+     (false? e)
+     (relation? e))))
+
 ;;A literal is an atomic formula or its negation. (or true or false...)
 (define literal?
   (lambda (p)
