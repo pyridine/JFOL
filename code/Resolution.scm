@@ -385,7 +385,7 @@
 			   (get-formulas (locate-proof-line proof line~P-ref)))))))
 	  (begin
 	    (add-to-rule-record proof RESOLUTION-SYMBOL (list resolution))
-	    (add-to-proof-steps (list (make-step new-line (list lineP-ref line~P-ref) "Resolution")))))))))
+	    (add-to-proof-steps proof (list (make-step new-line (list lineP-ref line~P-ref) "Resolution")))))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -535,11 +535,11 @@
 	       (negl (cadr next))
 	       (mnegl (map get-sh negl))
 	       (unification (apply unify-n-expressions (append trul mnegl))))
-	  (cons
+	  (append
 	   (if unification
-	       (cons unification
-		     (cons trul
-			   (list negl)))
+	       (list(cons unification
+		      (cons trul
+			    (list negl))))
 	       '())
 	   (find-unifications-for-potential-GLRs (cdr potential-list))))))) 
 
@@ -556,9 +556,10 @@
 	    (set-true-literals newglr (cadr data))
 	    (set-neg-literals  newglr (caddr data))
 	    (set-result-line newglr
-			     (append
-			      (list-difference true-parent (get-true-literals newglr))
-			      (list-difference neg-parent (get-neg-literals newglr))))
+			     (map (substitutor (get-unifier newglr))
+			      (append
+			       (list-difference true-parent (get-true-literals newglr))
+			       (list-difference neg-parent (get-neg-literals newglr)))))
 	    (cons newglr (but-into-GLRs (cdr list) true-parent neg-parent)))))))
 
 (define list-variables-in-list
@@ -579,23 +580,18 @@
     ;;For the neg list, we ensure no free variables match any in true-list.
     ;;So we need to not only make sure the neg list shares none with the true list, but that the true list's clauses share none too.
     ;;Renaming EVERY variable is implicitly an application of the Y rule.
-    (let* ((original-true-vars (list-variables-in-list true-list))
-	   (original-neg-vars  (list-variables-in-list neg-list))
-	   (original-all-vars  (set-union original-true-vars original-neg-vars))
-	   (renamed-neg-list   (rename-variables-in-list neg-list original-all-vars))
-	   (renamed-neg-vars   (list-variables-in-list renamed-neg-list))
-	   ;;Will rename repeating variables
-	   (renamed-true-list (rename-variables-in-list true-list (append original-all-vars renamed-neg-vars))) 
-	  ;;The ~Z
-	  (negs (filter (lambda (e) (and (negation? e) (atomic? (get-sh e)))) renamed-neg-list))
-	  ;;The X
-	  (trus (filter atomic? renamed-true-list)))
+    (let* ((true-vars        (list-variables-in-list true-list))
+	   (renamed-neg-list (rename-variables-in-list neg-list true-vars))
+	   ;;The ~Z
+	   (negs (filter (lambda (e) (and (negation? e) (atomic? (get-sh e)))) renamed-neg-list))
+	   ;;The X
+	   (trus (filter atomic? true-list)))
       (if (or (null? negs) (null? trus))
 	  #f ;;"No atomics in g1 or negatomics in g2" ;;FAILURE: Nothing to even potentially unify.;;A list of pairs of surface-term-agreeing terms.
 	  (let* ((potential-GLRs  (potential-GLR-lists-finder trus negs)))
 	    (if (null? potential-GLRs)
 		#f ;;(list "No potentials" trus negs)
-		(let ((real-GLRs (but-into-GLRs (find-unifications-for-potential-GLRs potential-GLRs) renamed-true-list renamed-neg-list)))
+		(let ((real-GLRs (but-into-GLRs (find-unifications-for-potential-GLRs potential-GLRs) true-list renamed-neg-list)))
 		  (if (null? real-GLRs)
 		      #f;; "No GLRs."
 		      (car (sort real-GLRs (lambda (a b) (< (length (get-result-line a) (get-result-line b))))))))))))))

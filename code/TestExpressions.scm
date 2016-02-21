@@ -60,6 +60,14 @@
    (universal 'x (universal 'y (binary 'IMP (relation 'kisses (variable 'x) (variable 'y)) (relation 'loves (variable 'x) (variable 'y)))))
    (relation 'kisses (constant 'elsa) (constant 'anna))))
 
+(define failargu
+  (list
+   ;;conclusion
+   (relation 'loves (constant 'elsa) (constant 'anna))
+   ;;premises
+   (universal 'x (universal 'y (binary 'IMP (relation 'kisses (variable 'x) (variable 'y)) (relation 'loves (variable 'x) (variable 'y)))))
+   (relation 'kisses (constant 'anna) (constant 'hans))))
+
 (define argu2
   (list
    ;;conclusion

@@ -124,6 +124,8 @@
 			 (recursive-make-renaming-substitution (cdr varlist) (cons newsym forbid))))))))
 	(apply-variable-renaming e (recursive-make-renaming-substitution offending-vars forbidden-new-symbols))))))
 
+;;Ensures no variable in the list of expressions e has any variable occurences in forbid-vars.
+;;does NOT add the variables of previous expressions to the forbid list.
 (define rename-variables-in-list
   (lambda (e forbid-vars)
     (if (null? e)
@@ -131,7 +133,7 @@
 	(let ((newe (rename-variables (car e) forbid-vars)))
 	  (cons
 	   newe
-	   (rename-variables-in-list (cdr e) (append forbid-vars (list-variables newe))))))))
+	   (rename-variables-in-list (cdr e) forbid-vars))))))
 
 ;;For easily mapping a substitution over terms.
 (define substitution-applier
