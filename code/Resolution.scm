@@ -357,12 +357,30 @@
     ;;Find every resolution
     (let ((every-resolution (permute-possible-resolutions (map get-formulas (get-steps proof)))))
       ;;Remove the ones that have already been done
+      ;;And the ones whose resultant lines already exist in the proof.
       (let ((new-resolutions (filter
 			      (lambda (x)
-				(not (member? x (get-resolutions proof))))
+				(and (not (member? x (get-resolutions proof)))
+				     (not (member? (resolution-result-line proof x) (map get-formulas (get-steps proof))))))
 			      every-resolution)))
 	;;Return the first non-null
 	(first-member not-null? new-resolutions)))))
+
+(define resolution-result-line
+  (lambda (proof resolution)
+    (let* ((line1 (get-formulas (locate-proof-line proof (get-line-1 resolution))))
+	   (line2 (get-formulas (locate-proof-line proof (get-line-2 resolution))))
+	   (pivot (get-pivot resolution))
+	   (~pivot (neg (get-pivot resolution)))
+	   (lineP-ref (if (member? pivot line1) (get-line-1 resolution) (get-line-2 resolution)))
+	   (line~P-ref (if (member? pivot line1) (get-line-2 resolution) (get-line-1 resolution)))
+	   (new-line (remove-if
+		      (lambda (m) (or (equal? m pivot) (equal? m ~pivot)))
+		      (remove-duplicates
+		       (append
+			(get-formulas (locate-proof-line proof lineP-ref))
+			(get-formulas (locate-proof-line proof line~P-ref)))))))
+      new-line)))
 
 ;;IN: a proof and a resolution.
 ;;(Modifies the proof...)
@@ -370,22 +388,12 @@
   (lambda (proof resolution)
     ;;First we actually need to figure out which line had the X and which line had the ~X.
     ;;But what if both have both?????????
-    (let ((line1 (get-formulas (locate-proof-line proof (get-line-1 resolution))))
-	  (line2 (get-formulas (locate-proof-line proof (get-line-2 resolution))))
-	  (pivot (get-pivot resolution))
-	  (~pivot (neg (get-pivot resolution))))
-      (let
-	  ((lineP-ref (if (member? pivot line1) (get-line-1 resolution) (get-line-2 resolution)))
-	   (line~P-ref (if (member? pivot line1) (get-line-2 resolution) (get-line-1 resolution))))
-	(let ((new-line (remove-if
-			 (lambda (m) (or (equal? m pivot) (equal? m ~pivot)))
-			 (remove-duplicates
-			  (append
-			   (get-formulas (locate-proof-line proof lineP-ref))
-			   (get-formulas (locate-proof-line proof line~P-ref)))))))
-	  (begin
-	    (add-to-rule-record proof RESOLUTION-SYMBOL (list resolution))
-	    (add-to-proof-steps proof (list (make-step new-line (list lineP-ref line~P-ref) "Resolution")))))))))
+    (begin
+      (add-to-rule-record proof RESOLUTION-SYMBOL (list resolution))
+      (add-to-proof-steps proof (list (make-step
+				       (resolution-result-line proof resolution)
+				       (list (get-line-1 resolution) (get-line-2 resolution))
+				       "Resolution"))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

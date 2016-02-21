@@ -229,7 +229,7 @@
 	    ((universal? in) (list "All $" (symbol->string (get-variable in)) " [" (print-pf (get-sh in)) "]" ))
 	    ((existential? in) (list "Some $" (symbol->string (get-variable in)) " [" (print-pf (get-sh in)) "]" ))
 	    ((or (function? in)
-		 (relation? in)) (list  (if (function? in) "f" "r")
+		 (relation? in)) (list  
 					(symbol->string (get-name in)) "("
 					(recurse-string print-pf (get-args in) ",") ")"))
 	    (else ;;Binary recursion
