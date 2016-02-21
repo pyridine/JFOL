@@ -4,4 +4,3 @@
 (load "Replacement.scm")
 (load "TestExpressions.scm")
 (load "PropResolution.scm")
-(load "FOL-Resolution.scm")

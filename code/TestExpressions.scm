@@ -66,12 +66,10 @@
    (relation 'hates (constant 'me) (function 'life-of (constant 'me)))
    ;;premises
    (universal 'x (binary 'IMP
-			 (relation 'sucks (function 'life-of (variable 'x)))
+			 (binary 'AND (relation 'sucks (function 'life-of (variable 'x))) (relation 'is-a-piece-of-shit (variable 'x)))
 			 (relation 'hates (variable 'x) (function 'life-of (variable 'x)))))
-   (relation 'sucks (function 'life-of (constant 'me)))))
-
-(define prove-argument
-  (lambda (e) (resolve (apply create-FOL-resolution-premise e))))
+   (relation 'sucks (function 'life-of (constant 'me)))
+   (relation 'is-a-piece-of-shit (constant 'me))))
 
 (define foo
   (list

@@ -709,3 +709,6 @@
 	(string-proposition-list
 	 'AND
 	 (uniquify-variables-in-expr-list (cons (neg conclusion) premises)))))))))
+
+(define prove-argument
+  (lambda (e) (ruleset-resolve (apply create-resolution-premise e))))
