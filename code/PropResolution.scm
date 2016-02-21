@@ -14,12 +14,6 @@
   (line-no get-line-no)             ;;Line number of proof
   (disjunct-no get-disjunct-no))    ;;Which disjunct of that line
 
-(define-record-type expansion-record
-  (make-expansion-record my-proof-location expansion-type)
-  expansion-record?
-  (my-proof-location get-expansion-location) ;;a 'proof-location' record. The line this expansion is due to.
-  (expansion-type get-expansion-type)) ;;see the list of expansion tpye definitions
-
 ;;expansion types
 (begin
   (define expansion-type-a '-ALPHAEXPANSION)
@@ -34,20 +28,16 @@
   (formula-list get-formulas)            ;;A list of pforms
   (line-justification get-justification-lines) ;;A (possibly empty) list of line numbers
   (justification-string get-justification-string))  ;;The type of justification... Make it a string.
-  
-(define-record-type resolution-record
-  (make-resolution-record line1 line2 pivot)
-  resolution-record?
-  (line1 get-line-1) ;;a ref into a proof's steps
-  (line2 get-line-2) ;;also a ref into a proof's steps
-  (pivot get-pivot)) ;;The propositional formula about which the resolution occurred.
-
 (define-record-type resolution-proof
-  (make-resolution-proof steps expansions resolutions)
+  (make-resolution-proof steps rule-application-records)
   resolution-proof?
   (steps get-steps set-steps)                ;;A list of resolution-steps
-  (expansions get-expansions set-expansions)      ;;A list of expansion-records. (Although the full location is specified, expanding any part of a line removes that whole line from expandable lines.
-  (resolutions get-resolutions set-resolutions))   ;;A list of resolution-records
+  ;;Rules record their appplication records here. Each rule shall have its own record list here,
+  ;;                                              stored under a unique symbol with the almighty 'assv'.
+  (rule-application-records get-rule-records set-rule-records) 
+  )
+
+;;A list of resolution-records
 
 (define-record-type proof-location
   (make-proof-location line-no disjunct-no)
@@ -65,8 +55,7 @@
   (lambda (step1)
     (make-resolution-proof
      (list (make-step (list step1) '() "Premise"))
-     '() ;;We start having made no expansions. Thus, no records.
-     '() ;;We start having made no resolutions. Thus, no resolutions
+     '() ;;We start having made no rule applications, so no records.
      )))
 
 (define locate-proof-line
@@ -83,22 +72,17 @@
   (lambda (proof)
     (apply + (map (lambda (x) 1 ) (get-steps proof)))))
 
-;;INPUT
-;;A list of expansion-records to add
-;;A list of resolution-records to add
-;;A list of resolution-steps to add
-;;OUTPUT
-;;(This method changes the input proof itself.)
-(define proof-add-steps!
-  (lambda (proof expan-records resolv-records steps)
-    (begin      
-      ;;Add the expansion records
-      (set-expansions proof (append expan-records (get-expansions proof)))
-      ;;Add  the resolution records
-      (set-resolutions proof (append resolv-records (get-resolutions proof)))
-       ;;Add the steps (NOTE THE ORDER!!!!! Steps are added to the end. Otherwise, the
-       ;;line references in expansions and resolutions are totally wrong!)
-       (set-steps proof (append (get-steps proof) steps)))))
+(define add-to-rule-record
+  (lambda (proof record-symbol list-of-items-to-add)
+    (let* ((old-record   (assv record-symbol (get-rule-records proof)))
+	   (new-items    (if old-record
+			    (append list-of-items-to-add (cdr old-record))
+			    list-of-items-to-add)))
+      (set-rule-records proof (replace-assv record-symbol new-items (get-rule-records proof))))))
+
+(define add-to-proof-steps
+  (lambda (proof step-list)
+    (set-steps proof (append (get-steps proof) step-list))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;
@@ -106,6 +90,18 @@
 ;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define-record-type expansion-record
+  (make-expansion-record my-proof-location expansion-type)
+  expansion-record?
+  (my-proof-location get-expansion-location) ;;a 'proof-location' record. The line this expansion is due to.
+  (expansion-type get-expansion-type)) ;;see the list of expansion tpye definitions
+
+(define EXPANSION-SYMBOL 'EXPANSION)
+
+(define get-expansions
+  (lambda (proof)
+    (let ((res (assv EXPANSION-SYMBOL (get-rule-records proof))))
+      (if res (cdr res) nil))))
 
 ;;Alpha formula components. My old code depends on this returning nil for failure.
 (define conjunctive-components
@@ -277,13 +273,13 @@
 			      (get-expansion-type expansion)
 			      (get-formulas parent-line)
 			      expansion-line-ref)))
-	  (proof-add-steps!
-	   proof
-	   (list expansion)
-	   '()
-	   (map (lambda (x)
-		  (make-step x (list expansion-line-no) justification-string))
-		lines-to-add)))))))
+	  (begin
+	    ;;Add the expansion rule record to the list.
+	    (add-to-rule-record proof EXPANSION-SYMBOL (list expansion))
+	    ;;Add the steps to the proof
+	    (add-to-proof-steps proof (map (lambda (x)
+					     (make-step x (list expansion-line-no) justification-string))
+					   lines-to-add))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;
@@ -291,6 +287,19 @@
 ;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define-record-type resolution-record
+  (make-resolution-record line1 line2 pivot)
+  resolution-record?
+  (line1 get-line-1) ;;a ref into a proof's steps
+  (line2 get-line-2) ;;also a ref into a proof's steps
+  (pivot get-pivot)) ;;The propositional formula about which the resolution occurred.
+
+(define RESOLUTION-SYMBOL 'RESOLUTION)
+
+(define get-resolutions
+  (lambda (proof)
+    (let ((res (assv RESOLUTION-SYMBOL (get-rule-records proof))))
+      (if res (cdr res) nil))))
 
 ;;Returns a list of every X such that ~X is in lefts and X is in rights.
 ;;Left and right must be lists of propositional sentences.
@@ -365,11 +374,9 @@
 			  (append
 			   (get-formulas (locate-proof-line proof lineP-ref))
 			   (get-formulas (locate-proof-line proof line~P-ref)))))))
-	  (proof-add-steps!
-	   proof
-	   '()
-	   (list resolution)
-	   (list (make-step new-line (list lineP-ref line~P-ref) "Resolution"))))))))
+	  (begin
+	    (add-to-rule-record proof RESOLUTION-SYMBOL (list resolution))
+	    (add-to-proof-steps (list (make-step new-line (list lineP-ref line~P-ref) "Resolution")))))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

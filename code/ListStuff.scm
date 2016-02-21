@@ -248,3 +248,12 @@
 				next
 				(recurse))))))
 	(recurse)))))
+
+;;replacement shall be the new list that symbol is associated with.
+(define replace-assv
+  (lambda (symbol replacement old-association-list)
+    (let* ((old-assv (assv symbol old-association-list)))
+      (cons
+       (cons symbol replacement)
+       (remove-if (lambda (x) (equal? x old-assv)) old-association-list)))))
+
