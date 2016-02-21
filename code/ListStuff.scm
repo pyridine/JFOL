@@ -90,10 +90,11 @@
 	    #t
 	    (pred-member? pred (cdr list))))))
 		
-;;Removes from A all elements also in B.	
+;;Removes from A all elements also in B.
+;;(((A - B) - C1) - C2) ....
 ;;uses equal? to test comparison.
 (define list-difference 
-  (lambda (A B)
+  (lambda (A B . C)
     (filter 
      (lambda (A-MEMBER)
        (not (member? A-MEMBER B ))) A)))

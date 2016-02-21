@@ -1,7 +1,8 @@
 ;;Load Propositional Formula stuff
 (load "ExprUtil.scm")
 (load "Simplification.scm")
-
+(load "Unification.scm")
+(load "TestExpressions.scm")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;
@@ -86,6 +87,13 @@
   (lambda (proof step-list)
     (set-steps proof (append (get-steps proof) step-list))))
 
+;;Gets the rule record associated list for some symbol.
+;;If nothing is there yet, returns '().
+(define get-rule-record-assv 
+  (lambda (proof symbol)
+    (let ((res (assv symbol (get-rule-records proof))))
+      (if res (cdr res) nil))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;
 ;;;;;  ALPHA AND BETA EXPANSION
@@ -102,8 +110,7 @@
 
 (define get-expansions
   (lambda (proof)
-    (let ((res (assv EXPANSION-SYMBOL (get-rule-records proof))))
-      (if res (cdr res) nil))))
+    (get-rule-record-assv proof EXPANSION-SYMBOL)))
 
 ;;Alpha formula components. My old code depends on this returning nil for failure.
 (define conjunctive-components
@@ -156,6 +163,7 @@
 		  nil)
 	      conj)
 	  disj))))
+
 ;;Whether the resolution proof is closed. If one of its steps is empty.
 (define proof-closed?
   (lambda (proof)
@@ -300,8 +308,7 @@
 
 (define get-resolutions
   (lambda (proof)
-    (let ((res (assv RESOLUTION-SYMBOL (get-rule-records proof))))
-      (if res (cdr res) nil))))
+    (get-rule-record-assv proof RESOLUTION-SYMBOL)))
 
 ;;Returns a list of every X such that ~X is in lefts and X is in rights.
 ;;Left and right must be lists of propositional sentences.
@@ -415,13 +422,13 @@
 	    (get-justification-string step)
 	    (recurse-string number->string (get-justification-lines step) ","))))
 
-(define print-resolution-proof
+(define print-latest-step
+  (lambda (proooooooooooooooof)
+    (print-step  (car (reverse (get-steps proooooooooooooooof))) (- (length (get-steps proooooooooooooooof)) 1))))
+
+(define print-proof-epilogue
   (lambda (proof)
-    (begin
-      (map (lambda (x y) (print-step x y))
-	   (get-steps proof)
-	   (reverse (range-exclusive (proof-num-lines proof))))
-      (print-wasted-lines proof))))
+    (print-wasted-lines proof)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -431,12 +438,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define GLR-SYMBOL 'GENERAL-LITERAL-RESOLUTION)
+(define GLR-KNOWN-FAILURES-SYMBOL 'GENERAL-LITERAL-RESOLUTION-FAILURES)
 
 ;;grab a list of all the GLR records so far...... nil if none.
 (define get-GLRs
   (lambda (proof)
-    (let ((res (assv GLR-SYMBOL (get-rule-records proof))))
-      (if res (cdr res) nil))))
+    (get-rule-record-assv proof GLR-SYMBOL)))
+
+(define get-known-GLR-failures
+  (lambda (proof)
+    (get-rule-record-assv proof GLR-KNOWN-FAILURES-SYMBOL)))
 
 ;;211: we can drop the quantifiers altogether, and work with the list C1, C2, ... CK of clauses containing free variables.
 ;;     But remember the quantifiers are implicitly present. So we never work with any clause directly, but rather with
@@ -613,7 +624,10 @@
 		(set-true-parent-line GLR (caar lineref-pairs))
 		(set-neg-parent-line  GLR (cdar lineref-pairs))
 		GLR)
-	      (find-first-GLR proof (cdr lineref-pairs)))))))
+	      (begin
+		;;If this lineref pair has no GLR now, it will never have one. 
+		(add-to-rule-record proof GLR-KNOWN-FAILURES-SYMBOL (list (car lineref-pairs)))
+		(find-first-GLR proof (cdr lineref-pairs))))))))
 
 ;;NEXT GLR
 ;;Sort of difficult...
@@ -629,7 +643,10 @@
   (lambda (proof)
     (let* ((all-line-refs (range-exclusive (length (get-steps proof))))
 	   (forbidden-line-refs (line-refs-used-by-GLRs (get-GLRs proof)))
+	   (impossible-line-refs (get-known-GLR-failures proof))
 	   (usable-line-refs (list-difference all-line-refs forbidden-line-refs))
+	   ;;Known-GLR-failures Seems to have little ex-time effect. Not working? No, the bottleneck is prepreocessing!
+	   (usable-line-refs (list-difference usable-line-refs impossible-line-refs))
 	   (possible-GLR-pairs (all-ordered-pairs usable-line-refs))
 	   (first-GLR (find-first-GLR proof possible-GLR-pairs)))
       (if first-GLR first-GLR nil))))
@@ -642,18 +659,15 @@
 ;; Takes a GLR record, of course.
 (define apply-GLR!
   (lambda (proof GLR)
-    (let ((justification-string  (string-append "General Literal Resolution with "
-						"T: " (number->string (get-true-parent-line GLR)) " "
-						"N: " (number->string (get-neg-parent-line GLR)) " "
+    (let ((justification-string  (string-append "General Literal Resolution " ;;The justification printer prints the line numbers
 						"with substitution: " (substitution->string (get-unifier GLR)))))
       (begin
 	(add-to-proof-steps proof
-			    (list (make-step
-				   (get-result-line GLR)
-				   (list (get-true-parent-line GLR) (get-neg-parent-line GLR) )
-				   justification-string)))
+	 (list (make-step
+		(get-result-line GLR)
+		(list (get-true-parent-line GLR) (get-neg-parent-line GLR) )
+		justification-string)))
 	(add-to-rule-record proof GLR-SYMBOL (list GLR))))))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;
@@ -683,20 +697,23 @@
 ;;Earlier (closer to car) members of ruleset are applied until failure before later ones.
 (define proof-ruleset-resolve
   (lambda (proof rules)
-    (let* ((next-step  (next-step-by-ruleset proof rules))
-	   (next-func  (if next-step (car next-step) #f))
-	   (next-input (if next-step (cdr next-step) #f)))
-      (cond
-       ((proof-closed? proof)    (begin (print "Proof closed!") proof))
-       (next-step                (begin (next-func proof next-input) (proof-ruleset-resolve proof rules)))
-       (else                    (begin (print "Exhausted all options. Proof failure :(") proof))))))
+    (begin
+      (print-latest-step proof)
+      (if (proof-closed? proof)   ;;Check proof closed before trying to apply a rule! Saves a LOT of time!
+	  (begin (print "Proof closed!") proof)
+	  (let* ((next-step  (next-step-by-ruleset proof rules))
+		 (next-func  (if next-step (car next-step) #f))
+		 (next-input (if next-step (cdr next-step) #f)))
+	    (cond
+	     (next-step                (begin (next-func proof next-input) (proof-ruleset-resolve proof rules)))
+	     (else                     (begin (print "Exhausted all options. Proof failure :(") proof))))))))
 
 (define ruleset-resolve
   (lambda (step1)
     (let ((proof (init-resolution-proof step1)))
       (begin
 	(proof-ruleset-resolve proof FOL-resolution-rules)
-	(print-resolution-proof proof)))))
+	(print-proof-epilogue proof)))))
 
 ;;Ensure only that each individual sentence is named apart.
 ;;We will take care of the rest.
@@ -710,5 +727,14 @@
 	 'AND
 	 (uniquify-variables-in-expr-list (cons (neg conclusion) premises)))))))))
 
+;;Tries to prove an argument, which is a list of expressions (conclusion premise1 ... premiseN)
 (define prove-argument
-  (lambda (e) (ruleset-resolve (apply create-resolution-premise e))))
+  (lambda (e)
+    (let ((time1 0.0) (time2 0.0))
+      (begin
+	(set! time1 (current-milliseconds))
+	(ruleset-resolve (apply create-resolution-premise e))
+	(set! time2 (current-milliseconds))
+	(printf
+	 "Time elapsed: ~A seconds\n"
+	  (* .001 (- time2 time1)))))))
