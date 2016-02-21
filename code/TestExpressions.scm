@@ -60,6 +60,9 @@
    (universal 'x (universal 'y (binary 'IMP (relation 'kisses (variable 'x) (variable 'y)) (relation 'loves (variable 'x) (variable 'y)))))
    (relation 'kisses (constant 'elsa) (constant 'anna))))
 
+(define resargu
+  (lambda () (resolve (apply create-FOL-resolution-premise argu))))
+
 (define foo
   (list
    (existential 'x (variable 'x))

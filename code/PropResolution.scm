@@ -1,20 +1,12 @@
 ;;Load Propositional Formula stuff
 (load "ExprUtil.scm")
 
-;;Alpha formula components.
-(define conjunctive-components
-  (lambda (formula)
-    (let ((a (alpha-components formula)))
-      (if a a nil))))
 
-;;Beta formula components.
-(define disjunctive-components
-  (lambda (formula)
-    (let ((b (beta-components formula)))
-      (if b b nil))))
-;;The code that was already here depends in a very strange way on these returning nil, not #f, if failure.
-;;I haven't yet worked on this file enough to remove this dependency.
-;;I should be using #f throughout to indicate failure. It makes things easier.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;
+;;;;;  STRUCTS AND DEFINITIONS
+;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-record-type proof-location
   (make-proof-location line-no disjunct-no)
@@ -57,6 +49,18 @@
   (expansions get-expansions set-expansions)      ;;A list of expansion-records. (Although the full location is specified, expanding any part of a line removes that whole line from expandable lines.
   (resolutions get-resolutions set-resolutions))   ;;A list of resolution-records
 
+(define-record-type proof-location
+  (make-proof-location line-no disjunct-no)
+  proof-location?
+  (line-no get-line-no)             ;;Line number of proof
+  (disjunct-no get-disjunct-no))    ;;Which disjunct of that line
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;
+;;;;;  PROOF UTILITIES
+;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define init-resolution-proof
   (lambda (step1)
     (make-resolution-proof
@@ -73,6 +77,58 @@
   (lambda (proof location)
     (list-ref (locate-proof-line proof (get-line-no location)) (get-disjunct-no location))))
 
+;;The number of lines (steps) in the proof.
+;;Silly. But who cares.
+(define proof-num-lines
+  (lambda (proof)
+    (apply + (map (lambda (x) 1 ) (get-steps proof)))))
+
+;;INPUT
+;;A list of expansion-records to add
+;;A list of resolution-records to add
+;;A list of resolution-steps to add
+;;OUTPUT
+;;(This method changes the input proof itself.)
+(define proof-add-steps!
+  (lambda (proof expan-records resolv-records steps)
+    (begin      
+      ;;Add the expansion records
+      (set-expansions proof (append expan-records (get-expansions proof)))
+      ;;Add  the resolution records
+      (set-resolutions proof (append resolv-records (get-resolutions proof)))
+       ;;Add the steps (NOTE THE ORDER!!!!! Steps are added to the end. Otherwise, the
+       ;;line references in expansions and resolutions are totally wrong!)
+       (set-steps proof (append (get-steps proof) steps)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;
+;;;;;  ALPHA AND BETA EXPANSION
+;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;Alpha formula components. My old code depends on this returning nil for failure.
+(define conjunctive-components
+  (lambda (formula)
+    (let ((a (alpha-components formula)))
+      (if a a nil))))
+
+;;Beta formula components. My old code depends on this returning nil for failure.
+(define disjunctive-components
+  (lambda (formula)
+    (let ((b (beta-components formula)))
+      (if b b nil))))
+
+(define expansion-type-to-string
+  (lambda (expansion-type)
+    (cond
+     ((equal? expansion-type expansion-type-nn) "~~A => A")
+     ((equal? expansion-type expansion-type-nttf) "~T => F")
+     ((equal? expansion-type expansion-type-nftt) "~F => T")
+     ((equal? expansion-type expansion-type-a) "Alpha Expansion")
+     ((equal? expansion-type expansion-type-b) "Beta Expansion")
+     (else "Unknown Expansion Type Error"))))
+
 (define expandable? 
   (lambda (pform)
     (or
@@ -84,26 +140,6 @@
       (or                                      ;;trivial expansions 2 and 2: not T, not F.
        (equal? true  (get-sh pform))
        (equal? false  (get-sh pform)))))))
-
-;;Returns a list of every X such that ~X is in lefts and X is in rights.
-;;Left and right must be lists of propositional sentences.
-;;Forbidden is a list of possible pivots X (not ~X) you want to skip over. (in terms of
-;;          (resolution, this means pivots we already used).
-(define get-resolution-pivots-unidirectional
-  (lambda (lefts rights forbid)
-    ;;for some reason, letrec makes this fuck up completely. I suppose because the order matters.
-    (let ((leftnegs (elements-satisfying (lambda (p) (is-type? p not-t)) lefts)))
-      (let ((negateds (map get-sh leftnegs)))
-	(let ((searchterms  (list-difference negateds forbid)))
-	  (list-intersect searchterms rights))))))
-
-;;Returns '() or all X such that X is in A (or B) and ~X is in B (or A).
-;;Forbidden is the list of propositional formulas X cannot be.
-(define get-resolution-pivots
-  (lambda (listA listB forbidden)
-    (set-union
-     (get-resolution-pivots-unidirectional listA listB forbidden)
-     (get-resolution-pivots-unidirectional listB listA forbidden))))
 
 ;;Returns '() or the expansion of the pform as a list of pforms. use `expandable?` first.
 (define get-expansion
@@ -122,13 +158,6 @@
 		  nil)
 	      conj)
 	  disj))))
-
-;;The number of lines (steps) in the proof.
-;;Silly. But who cares.
-(define proof-num-lines
-  (lambda (proof)
-    (apply + (map (lambda (x) 1 ) (get-steps proof)))))
-
 ;;Whether the resolution proof is closed. If one of its steps is empty.
 (define proof-closed?
   (lambda (proof)
@@ -190,56 +219,7 @@
 	     expandable-lines)
 	expandable-lines)))))
 
-;;IN: a list of lists of propositional formulas (i.e., the lines, brah)
-;;OUT: a list of resolution-records 
-(define permute-possible-resolutions
-  (lambda (lines)
-    (let ((numbered-pairs (all-unique-pairs (add-counters lines))))
-      (raise-list
-       (filter not-null?
-	       (map (lambda (pair)
-		      (let ((line1    (caar pair))
-			    (line1-no (cdar pair))
-			    (line2    (cadr pair))
-			    (line2-no (cddr pair)))
-			(let ((pivots (get-resolution-pivots line1 line2 nil)))
-			  (if (null? pivots)
-			      '()
-			      (map  (lambda (p)
-				      (make-resolution-record line1-no line2-no p))
-				    pivots)))))
-		    numbered-pairs))))))
 
-;;Returns a resolution-record of the next available resolution.
-;;Returns '() if there is no resolution possible.
-(define next-resolution
-  (lambda (proof)
-    ;;Find every resolution
-    (let ((every-resolution (permute-possible-resolutions (map get-formulas (get-steps proof)))))
-      ;;Remove the ones that have already been done
-      (let ((new-resolutions (filter
-			      (lambda (x)
-				(not (member? x (get-resolutions proof))))
-			      every-resolution)))
-	;;Return the first non-null
-	(first-member not-null? new-resolutions)))))
-
-;;INPUT
-;;A list of expansion-records to add
-;;A list of resolution-records to add
-;;A list of resolution-steps to add
-;;OUTPUT
-;;(This method changes the input proof itself.)
-(define proof-add-steps!
-  (lambda (proof expan-records resolv-records steps)
-    (begin      
-      ;;Add the expansion records
-      (set-expansions proof (append expan-records (get-expansions proof)))
-      ;;Add  the resolution records
-      (set-resolutions proof (append resolv-records (get-resolutions proof)))
-       ;;Add the steps (NOTE THE ORDER!!!!! Steps are added to the end. Otherwise, the
-       ;;line references in expansions and resolutions are totally wrong!)
-       (set-steps proof (append (get-steps proof) steps)))))
 
 ;;INPUT:
 ;;exptype is an expansion-type symbol
@@ -279,16 +259,6 @@
 				 ((equal? exptype expansion-type-nftt)  true))))
 		      new-line)))))))
 
-(define expansion-type-to-string
-  (lambda (expansion-type)
-    (cond
-     ((equal? expansion-type expansion-type-nn) "~~A => A")
-     ((equal? expansion-type expansion-type-nttf) "~T => F")
-     ((equal? expansion-type expansion-type-nftt) "~F => T")
-     ((equal? expansion-type expansion-type-a) "Alpha Expansion")
-     ((equal? expansion-type expansion-type-b) "Beta Expansion")
-     (else "Unknown Expansion Type Error"))))
-
 ;;This takes a proof, applies the specified expansion to it, and adds it to the proof's expansion record list.
 (define apply-expansion!
   (lambda (proof expansion)
@@ -315,6 +285,66 @@
 		  (make-step x (list expansion-line-no) justification-string))
 		lines-to-add)))))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;
+;;;;;  RESOLUTION
+;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;Returns a list of every X such that ~X is in lefts and X is in rights.
+;;Left and right must be lists of propositional sentences.
+;;Forbidden is a list of possible pivots X (not ~X) you want to skip over. (in terms of
+;;          (resolution, this means pivots we already used).
+(define get-resolution-pivots-unidirectional
+  (lambda (lefts rights forbid)
+    ;;for some reason, letrec makes this fuck up completely. I suppose because the order matters.
+    (let ((leftnegs (elements-satisfying (lambda (p) (is-type? p not-t)) lefts)))
+      (let ((negateds (map get-sh leftnegs)))
+	(let ((searchterms  (list-difference negateds forbid)))
+	  (list-intersect searchterms rights))))))
+
+;;Returns '() or all X such that X is in A (or B) and ~X is in B (or A).
+;;Forbidden is the list of propositional formulas X cannot be.
+(define get-resolution-pivots
+  (lambda (listA listB forbidden)
+    (set-union
+     (get-resolution-pivots-unidirectional listA listB forbidden)
+     (get-resolution-pivots-unidirectional listB listA forbidden))))
+
+;;IN: a list of lists of propositional formulas (i.e., the lines, brah)
+;;OUT: a list of resolution-records 
+(define permute-possible-resolutions
+  (lambda (lines)
+    (let ((numbered-pairs (all-unique-pairs (add-counters lines))))
+      (raise-list
+       (filter not-null?
+	       (map (lambda (pair)
+		      (let ((line1    (caar pair))
+			    (line1-no (cdar pair))
+			    (line2    (cadr pair))
+			    (line2-no (cddr pair)))
+			(let ((pivots (get-resolution-pivots line1 line2 nil)))
+			  (if (null? pivots)
+			      '()
+			      (map  (lambda (p)
+				      (make-resolution-record line1-no line2-no p))
+				    pivots)))))
+		    numbered-pairs))))))
+
+;;Returns a resolution-record of the next available resolution.
+;;Returns '() if there is no resolution possible.
+(define next-resolution
+  (lambda (proof)
+    ;;Find every resolution
+    (let ((every-resolution (permute-possible-resolutions (map get-formulas (get-steps proof)))))
+      ;;Remove the ones that have already been done
+      (let ((new-resolutions (filter
+			      (lambda (x)
+				(not (member? x (get-resolutions proof))))
+			      every-resolution)))
+	;;Return the first non-null
+	(first-member not-null? new-resolutions)))))
 
 ;;IN: a proof and a resolution.
 ;;(Modifies the proof...)
@@ -342,6 +372,12 @@
 	   (list (make-step new-line (list lineP-ref line~P-ref) "Resolution"))))))))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;
+;;;;;  UNIMPORTANT PRINTING BULLSHIT
+;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define get-all-justification-lines
   (lambda (step proof)
     (let ((lines (get-justification-lines step)))
@@ -350,27 +386,23 @@
 	  (append lines
 		  (raise-list
 		   (map (lambda (s) (get-all-justification-lines s proof))
-			(map (lambda (sn) (locate-proof-line proof sn)) lines )
-			)))))))
-
+			(map (lambda (sn) (locate-proof-line proof sn)) lines ))))))))
 
 (define get-wasted-lines
   (lambda (proof)
     (list-difference (range-exclusive (proof-num-lines proof))
 		     (get-all-justification-lines (car (reverse (get-steps proof))) proof) )))
 
-
 (define print-wasted-lines
   (lambda (proof)
     (print "Wasted lines:")
     (recurse-string number->string (cdr (get-wasted-lines proof)) ",")))
 
-
 (define print-step
   (lambda (step number)
     (printf "~S. [~S] ::: ~S on ~S\n"
 	    number
-	    (recurse-string print-pf (get-formulas step) ", ")
+	    (recurse-string print-pf (get-formulas step) " | ")
 	    (get-justification-string step)
 	    (recurse-string number->string (get-justification-lines step) ","))))
 
@@ -382,37 +414,80 @@
 	   (reverse (range-exclusive (proof-num-lines proof))))
       (print-wasted-lines proof))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;
+;;;;;  THE RESOLUTION ALGORITHM
+;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define proof-resolve
   (lambda (proof)
+    (warning "DEPRECATED: proof-resolve")
     (let ((resolution (next-resolution proof))
-	  (expansion (next-expansion proof))
-	  (proof-complete #f))
-      (if (proof-closed? proof)
-	  (begin
-	    (print "Proof closed!")
-	    proof)
-	  (if (not-null? resolution)
-	      (begin
-		(apply-resolution! proof resolution)
-		(proof-resolve proof))
-	      (if (not-null? expansion)
-		  (begin
-		    (apply-expansion! proof expansion)
-		    (proof-resolve proof))
-		  (begin
-		    (print "Exhausted all expansions/resolutions. Proof failed. :(")
-		    proof)))))))
+	  (expansion  (next-expansion proof)))
+      (cond
+       ((proof-closed? proof)   (begin (print "Proof closed!") proof))
+       ((not-null? resolution)  (begin (apply-resolution! proof resolution) (proof-resolve proof)))
+       ((not-null? expansion)   (begin (apply-expansion! proof expansion) (proof-resolve proof)))
+       (else                    (begin (print "Exhausted all options. Proof failure :(")))))))
 
-
-;;resolves a single sentence......
+;;Create a resolution expansion for {step1}.
 (define resolve
   (lambda (step1)
+    (warning "DEPRECATED: resolve")
     (let ((proof (init-resolution-proof step1)))
       (begin
 	(proof-resolve proof)
 	(print-resolution-proof proof)))))
 
-;;Prove that a sentence is true
-(define prove
- (lambda (step1)
-   (resolve (neg step1))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;
+;;;;;  EXPERIMENTAL PROOFING-BY-RULESET.
+;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;ACTUALLY, DISREGARD THIS STRUCTURE, I SUCK COCKS.
+;;JUST CONS THE TWO THINGS TOGETHER GODDAMN
+(define-record-type proof-rule-disregard-i-am-cock-sucker
+  (make-proof-rule-cocks find-cocks apply-cocks)
+  proof-rule?
+  (find-func  get-cocks-1)  ;;(func proof). Returns #f (or null... :P) if this rule can't be applied. Returns whatever you like if it can.
+  (apply-func get-cocks-2) ;;(func proof find-func-result). Applies this rule to the proof. Is a set! function: returns nothing.
+  ;;No "precedence": The order that rules are given to the rule-resolve function is the order of precedence.
+  )
+
+;;Returns #f if no rule applied,
+;; or (apply-func . apply-func-input) of the applied rule.
+(define next-step-by-ruleset
+  (lambda (proof rules)
+    (if (null? rules)
+	#f
+	(let* ((next-rule   (car rules))
+	       (rule-result ((car next-rule) proof)))
+	  (if (not (null? rule-result)) 
+	      (cons (cdr next-rule) rule-result)
+	      (next-step-by-ruleset proof (cdr rules)))))))
+
+;;Earlier (closer to car) members of ruleset are applied until failure before later ones.
+(define proof-ruleset-resolve
+  (lambda (proof rules)
+    (let* ((next-step  (next-step-by-ruleset proof rules))
+	   (next-func  (if next-step (car next-step) #f))
+	   (next-input (if next-step (cdr next-step) #f)))
+      (cond
+       ((proof-closed? proof)    (begin (print "Proof closed!") proof))
+       (next-step                (begin (next-func proof next-input) (proof-ruleset-resolve proof rules)))
+       (else                    (begin (print "Exhausted all options. Proof failure :(") proof))))))
+
+(define resolution-rule (cons next-resolution apply-resolution!))
+(define expansion-rule  (cons next-expansion apply-expansion!))
+(define FOL-resolution-rules (list expansion-rule resolution-rule))
+
+(define ruleset-resolve
+  (lambda (step1)
+    (let ((proof (init-resolution-proof step1)))
+      (begin
+	(proof-ruleset-resolve proof FOL-resolution-rules)
+	(print-resolution-proof proof)))))
