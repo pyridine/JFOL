@@ -60,15 +60,24 @@
    (universal 'x (universal 'y (binary 'IMP (relation 'kisses (variable 'x) (variable 'y)) (relation 'loves (variable 'x) (variable 'y)))))
    (relation 'kisses (constant 'elsa) (constant 'anna))))
 
-(define resargu
-  (lambda () (resolve (apply create-FOL-resolution-premise argu))))
+(define argu2
+  (list
+   ;;conclusion
+   (relation 'hates (constant 'me) (function 'life-of (constant 'me)))
+   ;;premises
+   (universal 'x (binary 'IMP
+			 (relation 'sucks (function 'life-of (variable 'x)))
+			 (relation 'hates (variable 'x) (function 'life-of (variable 'x)))))
+   (relation 'sucks (function 'life-of (constant 'me)))))
+
+(define prove-argument
+  (lambda (e) (resolve (apply create-FOL-resolution-premise e))))
 
 (define foo
   (list
    (existential 'x (variable 'x))
    (existential 'x (relation 'fucking (variable 'x) (constant 'ay)))
    ))
-
 		
 (define g1
   (list

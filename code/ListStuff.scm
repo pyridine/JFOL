@@ -176,6 +176,7 @@
 
 ;;Returns a list of all possible pairs of the elements of list.
 ;;Literally returns a list of pairs (x . y), not a list of lists!!
+;;DOES NOT RETURN ANY PAIR OF AN ITEM WITH ITSELF (where "item" means an index in the list.)
 (define all-unique-pairs
   (lambda (list)
     (if (null? list)
@@ -183,6 +184,29 @@
 	(append
 	 (map (lambda (x) (cons (car list) x)) (cdr list))
 	 (all-unique-pairs (cdr list))))))
+
+(define reverse-pair
+  (lambda (pair)
+    (cons
+     (cdr pair)
+     (car pair))))
+
+;;Isn't it funny?
+;;If you take the result from all-unique-pairs and add, for each pair, its reverse - that this is all ordered pairs?
+;;Hahaha. Easy peasy.
+;;DOES NOT RETURN ANY PAIR OF AN ITEM WITH ITSELF (where "item" means an index in the list.)
+(define all-ordered-pairs
+  (lambda (list)
+    (letrec ((recursively-cheat
+	      (lambda (pairs)
+		(if (null? pairs)
+		    '()
+		    (cons
+		     (car pairs)
+		     (cons
+		      (reverse-pair (car pairs))
+		      (recursively-cheat (cdr pairs))))))))
+      (recursively-cheat (all-unique-pairs list)))))
 
 ;;Pairs up each element of each list with its reference in that list.
 ;;e.g. '(a b c) -> '((a . 0) (b . 1) (c . 2))

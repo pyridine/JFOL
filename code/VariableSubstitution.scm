@@ -133,7 +133,6 @@
 	   newe
 	   (rename-variables-in-list (cdr e) (append forbid-vars (list-variables newe))))))))
 
-
 ;;For easily mapping a substitution over terms.
 (define substitution-applier
   (lambda (sub . exprs)
@@ -167,3 +166,17 @@
 		(car single-sub)
 		(apply-substitution (cdr single-sub) d2)))
 	     d1))))))
+
+
+
+(define substitution->string
+  (lambda (s)
+    (if (null? s)
+	" "
+	(string-append
+	 "["
+	 (symbol->string (caar s))
+	 " -> "
+	 (pe (cdar s))
+	 "] "
+	 (substitution->string (cdr s))))))
