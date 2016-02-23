@@ -7,5 +7,7 @@ if [[  $(head -1 ./_volout) != "OK!" ]]; then
     exit
 fi
 
-tail -1 _volout > yes
-xargs -a yes ./theorem-prover
+tail -1 _volout > __volout
+xargs -a __volout ./theorem-prover
+rm _volout
+rm __volout

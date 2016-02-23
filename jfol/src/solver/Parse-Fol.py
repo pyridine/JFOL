@@ -1,14 +1,14 @@
 #!/usr/bin/python
 import sys
 import waxeye
-import parser   #Parser.py for FOL
+import _parser   #_parser.py for FOL
 import fileinput
 import string
 
 binary_symbols = {"and": "AND", "or": "OR", "implies": "IMP", "equivalent": "EQUIV"}
 
 #####################################################################
-p = parser.Parser()
+p = _parser.Parser()
 def parse(it):
         original_string = it
         ast = p.parse(it)

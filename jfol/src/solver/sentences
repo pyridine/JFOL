@@ -1,5 +1,5 @@
-#p
-All X (Red[X] implies Green[X]).
-Red[axe-Of[bob]].
 #c
-Green[axe-Of[bob]].
+Mortal[socrates].
+#p
+All X (Man[X] implies Mortal[X]).
+Man[socrates].
