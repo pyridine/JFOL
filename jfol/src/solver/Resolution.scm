@@ -419,8 +419,8 @@
 
 (define print-wasted-lines
   (lambda (proof)
-    (print "Wasted lines:")
-    (recurse-string number->string (cdr (get-wasted-lines proof)) ",")))
+    (display "Wasted lines:")
+    (display (recurse-string number->string (cdr (get-wasted-lines proof)) ","))))
 
 (define print-step
   (lambda (step number)
@@ -436,6 +436,7 @@
 
 (define print-proof-epilogue
   (lambda (proof)
+    ( map (lambda (x)  (print-step (car x) (cdr x) ) ) (add-counters (get-steps proof))  )
     (print-wasted-lines proof)))
 
 
@@ -702,15 +703,14 @@
 (define proof-ruleset-resolve
   (lambda (proof rules)
     (begin
-      (print-latest-step proof)
       (if (proof-closed? proof)   ;;Check proof closed before trying to apply a rule! Saves a LOT of time!
-	  (begin (print "Proof closed!") proof)
+	  (begin (display "Proof closed!\n") proof)
 	  (let* ((next-step  (next-step-by-ruleset proof rules))
 		 (next-func  (if next-step (car next-step) #f))
 		 (next-input (if next-step (cdr next-step) #f)))
 	    (cond
 	     (next-step                (begin (next-func proof next-input) (proof-ruleset-resolve proof rules)))
-	     (else                     (begin (print "Exhausted all options. Proof failure :(") proof))))))))
+	     (else                     (begin (display "Exhausted all options. Proof failure :(\n") proof))))))))
 
 (define ruleset-resolve
   (lambda (step1)

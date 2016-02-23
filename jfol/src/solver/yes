@@ -1,0 +1,1 @@
+"(relation 'Green (function 'axe-Of (constant 'bob) ))"   "(universal 'X (binary 'IMP (relation 'Red (variable 'X) ) (relation 'Green (variable 'X) ) ))"   "(relation 'Red (function 'axe-Of (constant 'bob) ))"   

@@ -220,22 +220,22 @@
     (apply string-append 
 	   (cond
 	    ;;Base
-	    ((true? in) (list "!True!"))
-	    ((false? in) (list "!False!"))
+	    ((true? in) (list "True"))
+	    ((false? in) (list "False"))
 	    ((constant? in) (list (symbol->string (get-name in))))
-	    ((variable? in) (list "$" (symbol->string (get-variable in))))
+	    ((variable? in) (list (symbol->string (get-variable in))))
 	    ;;Recursion
-	    ((is-type? in not-t) (list "~(" (print-pf (get-sh in)) ")"))
-	    ((universal? in) (list "All $" (symbol->string (get-variable in)) " [" (print-pf (get-sh in)) "]" ))
-	    ((existential? in) (list "Some $" (symbol->string (get-variable in)) " [" (print-pf (get-sh in)) "]" ))
+	    ((is-type? in not-t) (list "(not " (print-pf (get-sh in)) ")"))
+	    ((universal? in) (list "All " (symbol->string (get-variable in)) " (" (print-pf (get-sh in)) ")" ))
+	    ((existential? in) (list "Some " (symbol->string (get-variable in)) " (" (print-pf (get-sh in)) ")" ))
 	    ((or (function? in)
 		 (relation? in)) (list  
-					(symbol->string (get-name in)) "("
-					(recurse-string print-pf (get-args in) ",") ")"))
+					(symbol->string (get-name in)) "["
+					(recurse-string print-pf (get-args in) ",") "]"))
 	    (else ;;Binary recursion
 	     (list
 	      "(" (print-pf (get-lh in))
-	      ") " (symbol->string (get-type in)) " ("
+	      " " (symbol->string (get-type in)) " "
 	          (print-pf (get-rh in))")"))))))
 
 (define pe print-pf) ;;I type this too much

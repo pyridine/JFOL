@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+python Parse-Fol.py $1 > _volout
+
+if [[  $(head -1 ./_volout) != "OK!" ]]; then
+    cat ./_volout #Error text written to out
+    exit
+fi
+
+tail -1 _volout > yes
+xargs -a yes ./theorem-prover
