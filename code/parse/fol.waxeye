@@ -1,0 +1,31 @@
+#provides '?' for conclusion sentences, just fun~
+sentence <- expression :'.' | expression :'?'
+expression <- universal | existential | binary | relation
+            | :'(' negation WS expression :')'
+
+negation <- :"not"
+
+universal   <- :"all"  WS variable WS expression
+
+existential <- :"some" WS variable WS expression
+
+binary <- :'(' expression WS binary-symbol WS  expression :')'
+
+relation <- [A-Z] *[a-zA-Z0-9_-] :'[' termlist :']'
+
+function <- [a-z] *[a-zA-Z0-9_-] :'[' termlist :']'
+
+termlist <- term
+          | term :',' termlist
+
+term <= function
+      | variable
+      | constant
+
+constant <- [a-z] *[a-zA-Z0-9_-]
+variable <- [A-Z] *[a-zA-Z0-9_-]
+
+binary-symbol <- "and" | "or" | "implies" | "equivalent"
+
+/*fucking whitespace...*/
+WS <: " " | +WS

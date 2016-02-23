@@ -1,0 +1,2 @@
+#!/bin/bash
+waxeye -g python . fol.waxeye
