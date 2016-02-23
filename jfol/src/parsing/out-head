@@ -1,0 +1,7 @@
+;;Remember, use csi -ss to run a chicken script.
+;;Or, use the shebang #!/usr/local/bin/csi -script
+(require 'posix)
+(change-directory "../solver")
+(load "Load-Prover.scm")
+(define conclusion '())
+(define premises '())

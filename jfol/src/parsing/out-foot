@@ -1,0 +1,3 @@
+(define argument (cons (car conclusion) premises))
+
+(prove-argument argument)   

@@ -63,7 +63,7 @@ def Schemize(ast):
                 return "(variable '" + ''.join(ast.children) + ") "
 
         if ast.type == "universal" or ast.type == "existential":
-                return "(" + ast.type + " '" + Schemize(ast.children[0]) + " " + Schemize(ast.children[1]) + ")"
+                return "(" + ast.type + " '" + ''.join(ast.children[0].children) + " " + Schemize(ast.children[1]) + ")"
 
         if ast.type == "binary":
                 return "(binary '" + binary_symbols[  ''.join(ast.children[1].children).lower() ] + " " + Schemize(ast.children[0]) + " " + Schemize(ast.children[2]) + " )"
@@ -90,7 +90,9 @@ for line in fileinput.input(): #This support both regular stdin AND $1 filename?
                         print "The only valid directives are: " + str(directives.keys())
                         exit()
         else:
-                
+                if current_source == conclusion and len(current_source) == 1:
+                        print "ERROR: more than one conclusion?"
+                        exit()
                 current_source.append(string.strip(line)) #remove surrounding whitespace..
 
 
@@ -104,28 +106,16 @@ premises   = [ Schemize(parse(x)) for x in premises   ]
 for line in open("out-head"):
         print line
 
-print " "
 print ";;Conclusions"
         
 #print footer
 for p in conclusion:
-        print "(cons " + p + " conclusion)"
+        print "(define conclusion (cons " + p + " conclusion))"
 
-
-print " "
-
-print " "
 print ";;Premises"
         
-
 for p in premises:
-        print "(cons " + p + " premises)"
-
-print " "
-
-print "(praise self \"being awesome\")"
-
-print " "
+        print "(define premises (cons " + p + " premises))"
 
 for line in open("out-foot"):
         print line

@@ -742,3 +742,6 @@
 	(printf
 	 "Time elapsed: ~A seconds\n"
 	  (* .001 (- time2 time1)))))))
+
+(define anna
+  (neg (binary 'AND (relation 'GOOD (constant 'DOG)) (neg (relation 'GOOD (constant 'DOG))))))
