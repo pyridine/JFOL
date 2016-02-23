@@ -95,6 +95,9 @@ for line in fileinput.input(): #This support both regular stdin AND $1 filename?
                         exit()
                 current_source.append(string.strip(line)) #remove surrounding whitespace..
 
+if len(conclusion) != 1:
+	print "ERROR: No conclusion?"
+	exit()
 
 #Parse every sentence
 #...Apparently I can't do this with a for loop on [conclusion,premises]....
@@ -102,20 +105,17 @@ conclusion = [ Schemize(parse(x)) for x in conclusion ]
 premises   = [ Schemize(parse(x)) for x in premises   ]
 
 #print header
-
 for line in open("out-head"):
-        print line
+        sys.stdout.write(line)
 
 print ";;Conclusions"
         
 #print footer
 for p in conclusion:
-        print "(define conclusion (cons " + p + " conclusion))"
+        sys.stdout.write("(define conclusion  "+ p + ")\n")
 
-print ";;Premises"
-        
 for p in premises:
-        print "(define premises (cons " + p + " premises))"
+        sys.stdout.write("(define premises (cons " + p + " premises))\n")
 
 for line in open("out-foot"):
-        print line
+        sys.stdout.write(line)

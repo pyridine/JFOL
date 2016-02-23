@@ -1,13 +1,15 @@
 #provides '?' for conclusion sentences, just fun~
-sentence <- expression :'.' | expression :'?'
+sentence <- expression :'.' | expression :'?' | expression :'\n'
 expression <- universal | existential | binary | relation
             | :'(' negation WS expression :')'
 
 negation <- :"not"
 
-universal   <- :"all"  WS variable WS expression
+universal   <- :ALLSTR  WS variable WS expression
+ALLSTR <: "all" | "every"
 
-existential <- :"some" WS variable WS expression
+existential <- :SOMESTR WS variable WS expression
+SOMESTR <: "exists" | "some"
 
 binary <- :'(' expression WS binary-symbol WS  expression :')'
 
