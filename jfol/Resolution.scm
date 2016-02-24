@@ -440,7 +440,7 @@
       (if (not-null? (cdr waste))
 	  (begin  
 	    (display "Wasted lines:\n")
-	    (display (recurse-string number->string (cdr waste) ","))
+	    (display (recurse-string number->string (map (lambda (x) (+ x 1)) (cdr waste)) ","))
 	    (display "\n")
 	    #t)
 	  #f))))
@@ -783,21 +783,9 @@
 
 
 (define success-emoticons
-  (list
-   ":D"
-   ":3"
-   "^_^"
-   "8^y"
-   "TvT"
-   "^w^"
-   "^3^"
-   "=]"
-   "B^D"
-   "8D"
-   "=D"
-   "=-3"
-   ":-)"
-   "<3"))
+  (list " ")
+  ;;(list ":D" ":3" "^_^" "8^y" "TvT" "^w^" "^3^" "=]" "B^D" "8D" "=D" "=-3" ":-)" "<3")
+  )
 
 (define step-to-formula-string
   (lambda (step-rec)
@@ -811,7 +799,7 @@
 
 (define step-to-justification-line-list
   (lambda (step-rec)
-    (recurse-string number->string (get-justification-lines step-rec) ",")))
+    (recurse-string number->string (map (lambda (x) (+ x 1)) (get-justification-lines step-rec)) ",")))
 
 (define _ayyy-lmao_ 0)
 (define reset-counter

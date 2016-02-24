@@ -68,6 +68,9 @@ def Schemize(ast):
         if ast.type == "binary":
                 return "(binary '" + binary_symbols[  ''.join(ast.children[1].children).lower() ] + " " + Schemize(ast.children[0]) + " " + Schemize(ast.children[2]) + " )"
         
+	if ast.type == "fakeprop":
+		return "(relation '* (constant '" + ''.join(ast.children) + "))"
+
 #####################################################################
 
 

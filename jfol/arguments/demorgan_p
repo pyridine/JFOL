@@ -1,0 +1,4 @@
+#p
+((not A) and (not B)).
+#c
+(not (A or B)).

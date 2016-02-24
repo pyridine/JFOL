@@ -2,8 +2,12 @@
 sentence <- expression :'.' | expression :'?'
 expression <- universal | existential | binary | relation
             | :'(' negation WS expression :')'
+            | fakeprop
 
 negation <- :"not"
+
+#fake propositional letter; is converted to a relation of the text within.
+fakeprop <- +[a-zA-Z0-9_-]
 
 universal   <- :ALLSTR  WS variable WS expression
 ALLSTR <: "all" | "every"
