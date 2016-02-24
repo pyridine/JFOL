@@ -783,7 +783,7 @@
 
 
 (define success-emoticons
-  (list " ")
+  (list "-> <-")
   ;;(list ":D" ":3" "^_^" "8^y" "TvT" "^w^" "^3^" "=]" "B^D" "8D" "=D" "=-3" ":-)" "<3")
   )
 
@@ -836,10 +836,6 @@
       (begin
 	(set! time1 (current-milliseconds))
 	(set! proof (separate-premises-ruleset-resolve (map resolution-form explist)))
-	(set! time2 (current-milliseconds))
-	(printf
-	 "Time elapsed: ~A seconds\n"
-	 (* .001 (- time2 time1)))
 	(let ((format (proof-to-format-list proof)))
 	  (map
 	   (lambda (f)
@@ -848,4 +844,9 @@
 	       (display (cadr f))
 	       (display (caddr f))))
 	   format))
-	(print-proof-epilogue proof)))))
+	(print-proof-epilogue proof)
+	(set! time2 (current-milliseconds))
+	(printf
+	 "Time elapsed: ~A seconds\n"
+	 (* .001 (- time2 time1)))
+	))))
