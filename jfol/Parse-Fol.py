@@ -83,6 +83,10 @@ def parse_input():
 	line_number = -1
 	for line in fileinput.input(): #This support both regular stdin AND $1 filename??
 		line_number += 1
+                #Comment
+                if line[:2] == '//':
+                        continue
+                #Directive
 		if line[0] == '#':
 			if len(line) > 1 and directives.has_key(line[1]):
 				current_source = directives[line[1]]
@@ -91,6 +95,7 @@ def parse_input():
 				print line
 				print "The only valid directives are: " + str(directives.keys())
 				exit()
+                #Sentence
 		else:
 			if current_source == conclusion and len(current_source) == 1:
 				print "ERROR: more than one conclusion?"
