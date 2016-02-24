@@ -1,0 +1,5 @@
+#p
+All X All Y (Criticizes[X,Y] implies Dislikes[X,Y]).
+Criticizes[lucy,john].
+#c
+Dislikes[lucy,john].

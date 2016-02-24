@@ -38,6 +38,8 @@
   ;;Rules record their appplication records here. Each rule shall have its own record list here,
   ;;                                              stored under a unique symbol with the almighty 'assv'.
   (rule-application-records get-rule-records set-rule-records) 
+  ;;We store the index of the last premise for ease of use
+  (last-premise-ref get-last-premise-ref set-last-premise-ref)
   )
 
 ;;A list of resolution-records
@@ -56,10 +58,13 @@
 
 (define init-resolution-proof
   (lambda (step1)
-    (make-resolution-proof
-     (list (make-step (list step1) '() "Premise"))
-     '() ;;We start having made no rule applications, so no records.
-     )))
+    (let ((proof (make-resolution-proof
+	    (list (make-step (list step1) '() "Premise"))
+	    '() ;;We start having made no rule applications, so no records.
+	    )))
+      (begin
+	(set-last-premise-ref proof 0)
+	proof))))
 
 (define locate-proof-line
   (lambda (proof line-no)
@@ -93,6 +98,16 @@
   (lambda (proof symbol)
     (let ((res (assv symbol (get-rule-records proof))))
       (if res (cdr res) nil))))
+
+
+(define separate-premises-init-resolution-proof
+  (lambda (steps)
+    (let ((proof (make-resolution-proof '() '()))
+	  (premises (reverse (map (lambda (x) (make-step (list x) '()  "Premise" )) steps))))
+      (begin
+	(add-to-proof-steps proof premises)
+	(set-last-premise-ref proof (- (length steps) 1))
+	proof))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;
@@ -419,8 +434,9 @@
 
 (define print-wasted-lines
   (lambda (proof)
-    (display "Wasted lines:")
-    (display (recurse-string number->string (cdr (get-wasted-lines proof)) ","))))
+    (display "Wasted lines:\n")
+    (display (recurse-string number->string (cdr (get-wasted-lines proof)) ","))
+    (display "\n")))
 
 (define print-step
   (lambda (step number)
@@ -719,17 +735,28 @@
 	(proof-ruleset-resolve proof FOL-resolution-rules)
 	(print-proof-epilogue proof)))))
 
+;;Puts all premises as separate lines. Conclusion must still appear first.
+(define separate-premises-ruleset-resolve
+  (lambda (first-steps)
+    (let* ((conc  (neg (car first-steps)))
+	   (proof (separate-premises-init-resolution-proof (completely-rename-variables-in-list (cons conc (cdr first-steps)) '()))))
+      (begin
+	(proof-ruleset-resolve proof FOL-resolution-rules)
+	(print-proof-epilogue proof)))))
+
+
+;;Turns a single expression into proper resolution form.
+(define resolution-form
+  (lambda (expression)
+    (strip-quantifiers (skolemize (prenex (reduce-connectives expression))))))
+
 ;;Ensure only that each individual sentence is named apart.
 ;;We will take care of the rest.
 (define create-resolution-premise
   (lambda (conclusion . premises)
-    (strip-quantifiers
-     (skolemize
-      (prenex
-       (reduce-connectives
-	(string-proposition-list
-	 'AND
-	 (uniquify-variables-in-expr-list (cons (neg conclusion) premises)))))))))
+    (resolution-form
+     (string-proposition-list 'AND
+      (uniquify-variables-in-expr-list (cons (neg conclusion) premises))))))
 
 ;;Tries to prove an argument, which is a list of expressions (conclusion premise1 ... premiseN)
 (define prove-argument
@@ -741,7 +768,18 @@
 	(set! time2 (current-milliseconds))
 	(printf
 	 "Time elapsed: ~A seconds\n"
-	  (* .001 (- time2 time1)))))))
+	 (* .001 (- time2 time1)))))))
+
+(define separate-premises-prove-argument
+  (lambda (explist)
+    (let ((time1 0.0) (time2 0.0))
+      (begin
+	(set! time1 (current-milliseconds))
+	(separate-premises-ruleset-resolve (map resolution-form explist))
+	(set! time2 (current-milliseconds))
+	(printf
+	 "Time elapsed: ~A seconds\n"
+	 (* .001 (- time2 time1)))))))
 
 (define anna
   (neg (binary 'AND (relation 'GOOD (constant 'DOG)) (neg (relation 'GOOD (constant 'DOG))))))

@@ -135,6 +135,17 @@
 	   newe
 	   (rename-variables-in-list (cdr e) forbid-vars))))))
 
+;;Ensures no variable in the list of expressions e has any variable occurences in forbid-vars.
+;;DOES add the variables of previous expressions to the forbid list.
+(define completely-rename-variables-in-list
+  (lambda (e forbid-vars)
+    (if (null? e)
+	'()
+	(let ((newe (rename-variables (car e) forbid-vars)))
+	  (cons
+	   newe
+	   (rename-variables-in-list (cdr e) (append (list-variables newe) forbid-vars)))))))
+
 ;;For easily mapping a substitution over terms.
 (define substitution-applier
   (lambda (sub . exprs)
