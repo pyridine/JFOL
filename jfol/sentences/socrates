@@ -1,5 +1,5 @@
-#c
-Mortal[socrates].
 #p
 All X (Man[X] implies Mortal[X]).
 Man[socrates].
+#c
+Mortal[socrates].

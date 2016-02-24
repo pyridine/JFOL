@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys
 import waxeye
-import parser   #Parser.py for FOL
+import parser   #_parser.py for FOL
 import fileinput
 import string
 
@@ -70,52 +70,53 @@ def Schemize(ast):
         
 #####################################################################
 
-premises   = []
-conclusion = [] #vector...?
-current_source = premises
 
-#a for axiom. Treated no differently than premises.
-directives = {'a': premises, 'p': premises , 'c': conclusion}
+def parse_input():
+	premises   = []
+	conclusion = [] #vector...?
+	current_source = premises
 
-#transform the input
-line_number = -1
-for line in fileinput.input(): #This support both regular stdin AND $1 filename??
-        line_number += 1
-        if line[0] == '#':
-                if len(line) > 1 and directives.has_key(line[1]):
-                        current_source = directives[line[1]]
-                else:
-                        print "ERROR: line " + str(line_number) + " contains an invalid directive:"
-                        print line
-                        print "The only valid directives are: " + str(directives.keys())
-                        exit()
-        else:
-                if current_source == conclusion and len(current_source) == 1:
-                        print "ERROR: more than one conclusion?"
-                        exit()
-                current_source.append(string.strip(line)) #remove surrounding whitespace..
+	#a for axiom. Treated no differently than premises.
+	directives = {'a': premises, 'p': premises , 'c': conclusion}
 
-if len(conclusion) != 1:
-	print "ERROR: No conclusion?"
-	exit()
+	#transform the input
+	line_number = -1
+	for line in fileinput.input(): #This support both regular stdin AND $1 filename??
+		line_number += 1
+		if line[0] == '#':
+			if len(line) > 1 and directives.has_key(line[1]):
+				current_source = directives[line[1]]
+			else:
+				print "ERROR: line " + str(line_number) + " contains an invalid directive:"
+				print line
+				print "The only valid directives are: " + str(directives.keys())
+				exit()
+		else:
+			if current_source == conclusion and len(current_source) == 1:
+				print "ERROR: more than one conclusion?"
+				exit()
+			current_source.append(string.strip(line)) #remove surrounding whitespace..
 
-#Parse every sentence
-#...Apparently I can't do this with a for loop on [conclusion,premises]....
-conclusion = [ Schemize(parse(x)) for x in conclusion ]
-premises   = [ Schemize(parse(x)) for x in premises   ]
+	if len(conclusion) != 1:
+		print "ERROR: No conclusion?"
+		exit()
 
-#print header
-for line in open("out-head"):
-        sys.stdout.write(line)
+	#Parse every sentence
+	#...Apparently I can't do this with a for loop on [conclusion,premises]....
+	conclusion = [ Schemize(parse(x)) for x in conclusion ]
+	premises   = [ Schemize(parse(x)) for x in premises   ]
 
-print ";;Conclusions"
-        
-#print footer
-for p in conclusion:
-        sys.stdout.write("(define conclusion  "+ p + ")\n")
+	output = ""
 
-for p in premises:
-        sys.stdout.write("(define premises (cons " + p + " premises))\n")
+	print "OK!"
 
-for line in open("out-foot"):
-        sys.stdout.write(line)
+	for p in conclusion:
+		output += "\"" + p + "\"   "
+
+	for p in premises:
+		output += "\"" + p + "\"   "
+                
+	sys.stdout.write(output + "\n")
+
+
+parse_input()

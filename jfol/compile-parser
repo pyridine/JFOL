@@ -1,3 +1,2 @@
 #!/bin/bash
 waxeye -g python . fol.waxeye
-mv parser.py _parser.py
