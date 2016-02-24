@@ -29,7 +29,7 @@
   resolution-step?
   (formula-list get-formulas)            ;;A list of pforms
   (line-justification get-justification-lines) ;;A (possibly empty) list of line numbers
-  (justification-string get-justification-string))  ;;The type of justification... Make it a string.
+  (justification-string get-justification-string set-justification-string))  ;;The type of justification... Make it a string.
 
 (define-record-type resolution-proof
   (make-resolution-proof steps rule-application-records)
@@ -99,12 +99,14 @@
     (let ((res (assv symbol (get-rule-records proof))))
       (if res (cdr res) nil))))
 
-
 (define separate-premises-init-resolution-proof
   (lambda (steps)
-    (let ((proof (make-resolution-proof '() '()))
-	  (premises (reverse (map (lambda (x) (make-step (list x) '()  "Premise" )) steps))))
+    (let* ((proof (make-resolution-proof '() '()))
+       	   (premises (reverse (map (lambda (x) (make-step (list x) '()  "Premise" )) steps)))
+ 	   (conclusion (car (reverse premises))))
       (begin
+	(set-justification-string conclusion "Negated conclusion")
+	(set! premises (reverse (cons conclusion (cdr (reverse premises)))))
 	(add-to-proof-steps proof premises)
 	(set-last-premise-ref proof (- (length steps) 1))
 	proof))))
@@ -452,7 +454,7 @@
 
 (define print-proof-epilogue
   (lambda (proof)
-    ( map (lambda (x)  (print-step (car x) (cdr x) ) ) (add-counters (get-steps proof))  )
+    
     (print-wasted-lines proof)))
 
 
@@ -742,8 +744,7 @@
 	   (proof (separate-premises-init-resolution-proof (completely-rename-variables-in-list (cons conc (cdr first-steps)) '()))))
       (begin
 	(proof-ruleset-resolve proof FOL-resolution-rules)
-	(print-proof-epilogue proof)))))
-
+	proof))))
 
 ;;Turns a single expression into proper resolution form.
 (define resolution-form
@@ -772,14 +773,82 @@
 
 (define separate-premises-prove-argument
   (lambda (explist)
-    (let ((time1 0.0) (time2 0.0))
+    (let ((time1 0.0) (time2 0.0) (proof #f))
       (begin
 	(set! time1 (current-milliseconds))
-	(separate-premises-ruleset-resolve (map resolution-form explist))
+	(set! proof (separate-premises-ruleset-resolve (map resolution-form explist)))
 	(set! time2 (current-milliseconds))
 	(printf
 	 "Time elapsed: ~A seconds\n"
-	 (* .001 (- time2 time1)))))))
+	 (* .001 (- time2 time1)))
+	(let ((format (proof-to-format-list proof)))
+	  (map
+	   (lambda (f)
+	     (begin
+	       (display (car f))
+	       (display (cadr f))
+	       (display (caddr f))))
+	   format))
+	(print-proof-epilogue proof)))))
 
-(define anna
-  (neg (binary 'AND (relation 'GOOD (constant 'DOG)) (neg (relation 'GOOD (constant 'DOG))))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;Printing utilities
+
+
+(define success-emoticons
+  (list
+   ":D"
+   ":3"
+   "^_^"
+   "8^y"
+   "TvT"
+   "^w^"
+   "^3^"
+   "=]"
+   "B^D"
+   "8D"
+   "=D"
+   "=-3"
+   ":-)"
+   "<3"))
+
+(define step-to-formula-string
+  (lambda (step-rec)
+    (if (null? (get-formulas step-rec))
+	(list-ref success-emoticons (random (length success-emoticons)))
+	(recurse-string print-pf (get-formulas step-rec) " | "))))
+
+(define step-to-justification-string
+  (lambda (step-rec)
+    (get-justification-string step-rec)))
+
+(define step-to-justification-line-list
+  (lambda (step-rec)
+    (recurse-string number->string (get-justification-lines step-rec) ",")))
+
+
+(define _ayyy-lmao_ 0)
+(define reset-counter
+  (lambda ()
+    (set! _ayyy-lmao_ 0)))
+(define next-counter-str
+  (lambda ()
+    (set! _ayyy-lmao_ (+ 1 _ayyy-lmao_))
+    (string-append
+     (number->string _ayyy-lmao_)
+     ". ")))
+
+;;Creates a set of strings for nicely formatting the proof's output.
+(define proof-to-format-list
+  (lambda (proof)
+    (let ((steps (get-steps proof)))
+      (begin
+	(reset-counter)
+       (map list
+	    (map (lambda (x) (string-append (pad-string (next-counter-str)  (+ 2(string-length (number->string (length (get-steps proof))  )    ))   ) x "    "))
+		 (pad-string-list (map step-to-formula-string steps))) ;;1. Step
+	    (map (lambda (x) (string-append x (if (equal? x "") "   " " : ")))
+		 (pad-string-list (map step-to-justification-line-list steps))) ;;2. Lines due
+	    (map (lambda (x) (string-append x "\n"))
+		 (map step-to-justification-string steps))))))) ;;3. Justification
+
+;;(print-proof-epilogue pro

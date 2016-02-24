@@ -292,3 +292,16 @@
        (cons symbol replacement)
        (remove-if (lambda (x) (equal? x old-assv)) old-association-list)))))
 
+;;If str is less than n length, adds n-strlen spaces to the string.
+;;Hey, this is a sort of clever algorithm! I actually had to think about it!!!!! :////
+(define pad-string
+  (lambda (str n)
+    (if (>= (string-length str) n)
+	str
+	(string-append (pad-string str (- n 1)) " "))))
+
+;;Pads all strings in list to the len of the longest one.
+(define pad-string-list
+  (lambda (list)
+    (let ((longest-len (car (sort (map string-length list) >))))
+       (map (lambda (x) (pad-string x longest-len)) list))))
