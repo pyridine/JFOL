@@ -235,7 +235,7 @@
 	    (else ;;Binary recursion
 	     (list
 	      "(" (print-pf (get-lh in))
-	      " " (symbol->string (get-type in)) " "
+	      " " (cdr (assv (get-type in) bin-sym-string-assoc)) " "
 	          (print-pf (get-rh in))")"))))))
 
 (define pe print-pf) ;;I type this too much

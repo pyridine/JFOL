@@ -436,9 +436,14 @@
 
 (define print-wasted-lines
   (lambda (proof)
-    (display "Wasted lines:\n")
-    (display (recurse-string number->string (cdr (get-wasted-lines proof)) ","))
-    (display "\n")))
+    (let ((waste (get-wasted-lines proof)))
+      (if (not-null? (cdr waste))
+	  (begin  
+	    (display "Wasted lines:\n")
+	    (display (recurse-string number->string (cdr waste) ","))
+	    (display "\n")
+	    #t)
+	  #f))))
 
 (define print-step
   (lambda (step number)
@@ -454,7 +459,10 @@
 
 (define print-proof-epilogue
   (lambda (proof)
-    
+    (if (proof-closed? proof)
+	(display "Proof closed!\n")
+	(display "Proof failed... :(\n")
+	)
     (print-wasted-lines proof)))
 
 
@@ -722,13 +730,13 @@
   (lambda (proof rules)
     (begin
       (if (proof-closed? proof)   ;;Check proof closed before trying to apply a rule! Saves a LOT of time!
-	  (begin (display "Proof closed!\n") proof)
+	  proof
 	  (let* ((next-step  (next-step-by-ruleset proof rules))
 		 (next-func  (if next-step (car next-step) #f))
 		 (next-input (if next-step (cdr next-step) #f)))
 	    (cond
 	     (next-step                (begin (next-func proof next-input) (proof-ruleset-resolve proof rules)))
-	     (else                     (begin (display "Exhausted all options. Proof failure :(\n") proof))))))))
+	     (else                     proof)))))))
 
 (define ruleset-resolve
   (lambda (step1)
@@ -771,26 +779,6 @@
 	 "Time elapsed: ~A seconds\n"
 	 (* .001 (- time2 time1)))))))
 
-(define separate-premises-prove-argument
-  (lambda (explist)
-    (let ((time1 0.0) (time2 0.0) (proof #f))
-      (begin
-	(set! time1 (current-milliseconds))
-	(set! proof (separate-premises-ruleset-resolve (map resolution-form explist)))
-	(set! time2 (current-milliseconds))
-	(printf
-	 "Time elapsed: ~A seconds\n"
-	 (* .001 (- time2 time1)))
-	(let ((format (proof-to-format-list proof)))
-	  (map
-	   (lambda (f)
-	     (begin
-	       (display (car f))
-	       (display (cadr f))
-	       (display (caddr f))))
-	   format))
-	(print-proof-epilogue proof)))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;Printing utilities
 
 
@@ -825,7 +813,6 @@
   (lambda (step-rec)
     (recurse-string number->string (get-justification-lines step-rec) ",")))
 
-
 (define _ayyy-lmao_ 0)
 (define reset-counter
   (lambda ()
@@ -852,3 +839,25 @@
 		 (map step-to-justification-string steps))))))) ;;3. Justification
 
 ;;(print-proof-epilogue pro
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; so what's wrong with taking the backstreet
+
+(define separate-premises-prove-argument
+  (lambda (explist)
+    (let ((time1 0.0) (time2 0.0) (proof #f))
+      (begin
+	(set! time1 (current-milliseconds))
+	(set! proof (separate-premises-ruleset-resolve (map resolution-form explist)))
+	(set! time2 (current-milliseconds))
+	(printf
+	 "Time elapsed: ~A seconds\n"
+	 (* .001 (- time2 time1)))
+	(let ((format (proof-to-format-list proof)))
+	  (map
+	   (lambda (f)
+	     (begin
+	       (display (car f))
+	       (display (cadr f))
+	       (display (caddr f))))
+	   format))
+	(print-proof-epilogue proof)))))

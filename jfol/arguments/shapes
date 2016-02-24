@@ -1,0 +1,6 @@
+#p
+(not Exists X (Tet[X] and Small[X])).
+All X (Small[X] or (Medium[X] or Large[X])).
+Tet[shape].
+#c
+(Large[shape] or Medium[shape]).

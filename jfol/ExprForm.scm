@@ -59,6 +59,22 @@
   (define atomic-false-sym '-PFATOMICFALSE))
 ;;(define letter-t 'LETTER) ;;This is unused in FOL.
 
+;;Association list between byn-syms and nicely printable strings.
+(define bin-sym-string-assoc
+  (list
+   (cons not-t "not")
+   (cons and-t "and")
+   (cons or-t "or")
+   (cons imp-t "implies")
+   (cons revimp-t "reverse-implies")
+   (cons nand-t "not-and")
+   (cons nor-t "nor")
+   (cons notimp-t "not-implies")
+   (cons notrevimp-t "not-reverse-implies")
+   (cons equiv-t "iff")
+   (cons inequiv-t "inequivalent")))
+
+
 ;;Eval this to remind yourself of the major types of expressions
 (define major-types '(Universal Existential Relation Function Constant Variable Negation (Binaries) True False))
 
