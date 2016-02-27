@@ -11,7 +11,6 @@
 ;;And sometimes I like "null"
 (define null '())
                 
-
 ;;For some fucking reason, csi from the terminal doesn't recognize "filter",
 ;;but from within Emacs/Geiser it does???
 (define filter

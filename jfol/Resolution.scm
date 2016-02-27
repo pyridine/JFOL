@@ -1,3 +1,4 @@
+(load "Timer.scm")
 (load "Resolution-Base.scm")
 (load "Rule-Resolution.scm")
 (load "Rule-GenLitResolution.scm")
@@ -49,11 +50,15 @@
 	(proof-ruleset-resolve proof FOL-resolution-rules)
 	proof))))
 
+(define resolution-form
+  (lambda (expression)
+    (strip-quantifiers (skolemize (prenex (reduce-connectives expression))))))
+
 (define prove-argument
   (lambda (explist)
     (let ((time1 0.0) (time2 0.0) (proof #f))
       (begin
-	(set! time1 (current-milliseconds))
+	(start-timer 'Poof)
 	(set! proof (separate-premises-ruleset-resolve (map resolution-form explist)))
 	(let ((format (proof-to-format-list proof)))
 	  (map
@@ -64,7 +69,4 @@
 	       (display (caddr f))))
 	   format))
 	(print-proof-epilogue proof)
-	(set! time2 (current-milliseconds))
-	(printf
-	 "Proof time: ~A seconds\n"
-	 (* .001 (- time2 time1)))))))
+	(display-timer 'Poof "Proof time (seconds): ")))))
