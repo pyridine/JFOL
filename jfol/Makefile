@@ -1,7 +1,7 @@
-all:  parser
+all:  parser.py
 	csc -o theorem-prover Prover.scm -require-extension pyffi
 
-parser:
+parser.py:
 	./compile-parser
 
 
