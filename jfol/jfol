@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 python Parse-Fol.py $1 > _volout
 
 if [[  $(head -1 ./_volout) != "OK!" ]]; then

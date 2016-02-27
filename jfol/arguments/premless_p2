@@ -1,0 +1,2 @@
+#c
+((not A) or (not ((not B) and ((not A) or B)))).

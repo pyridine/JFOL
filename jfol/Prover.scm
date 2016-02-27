@@ -10,4 +10,4 @@
     (begin
       (display "The solver requires arguments as JFOL scheme expressions.\nThe output of the parser is just the format of the arguments I need.\n")
       (exit))
-    (separate-premises-prove-argument (map eval-string (command-line-arguments))))
+    (prove-argument (map eval-string (command-line-arguments))))
