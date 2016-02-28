@@ -18,7 +18,7 @@
 ;;
 (load "ExprUtil.scm")
 (load "VariableSubstitution.scm")
-(load "Replacement.scm")
+(load "FOLPatternMatcher.scm")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
