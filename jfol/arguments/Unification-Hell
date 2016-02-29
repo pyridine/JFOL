@@ -1,0 +1,5 @@
+//Kill me. This file tests unification.
+#p
+All X All Z All W All U (P[f[Y,g[Z]],h[b]] or P[f[h[W],g[a]],U]).
+#c
+All Y All Z P[f[h[b],g[Z]],Y].

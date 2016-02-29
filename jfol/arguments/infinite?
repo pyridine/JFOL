@@ -1,0 +1,8 @@
+//Some versions of Prolog get lost in an infinite loop in this due to using Linear Resolution.
+#p
+P[a,b].
+P[c,b].
+All X All Y All Z ((P[X,Z] or (not P[X,Y])) or (not P[Y,Z])).
+All X All Y (P[X,Y] or (not P[Y,X])).
+#c
+P[a,c].

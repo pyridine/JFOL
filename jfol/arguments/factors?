@@ -1,0 +1,5 @@
+//Tests that the Factoring rule is properly present (implicit in Resolution with GLR).
+#c
+All X All Y ((P[X] or P[Y]) implies Exists X Exists Y (P[X] and P[Y])).
+//Strictly speaking, this should not work with JFOL, which ostensibly requires of the user that argument steps be named apart.
+//But because variables are temporarily renamed before GLR, and this consists of just two clauses, the renaming implicitly occurs.

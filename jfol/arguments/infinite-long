@@ -1,0 +1,8 @@
+//Another argument that a linear resolution will infinite loop on.
+//Should take a long time to solve (your friend Folkler's Resolution took 2.019 seconds)
+#p
+All X All Y All Z ((P[X,Y] and P[Y,Z]) implies P[X,Z]).
+All X All Y (P[X,Y] implies P[Y,X]).
+#c
+All X All Y All Z ((P[X,Y] and P[Z,Y]) implies P[X,Z]).
+//YOURS, UNFORTUNATELY, ENTERS AN INFINITE LOOP!
