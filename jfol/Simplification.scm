@@ -16,9 +16,9 @@
 ;;
 ;; Make sure you uniqueify the variables before combining your argument steps into the single resolution premise.
 ;;
-(load "ExprUtil.scm")
+(load "FOLUtil.scm")
 (load "VariableSubstitution.scm")
-(load "FOLPatternMatcher.scm")
+(load "PatternMatcher.scm")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;

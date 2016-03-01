@@ -1,3 +1,4 @@
+//Problem 13-33 from Language, Proof and Logic (PHIL 150)
 #p
 (not Exists X (Tet[X] and Small[X])).
 All X (Small[X] or (Medium[X] or Large[X])).

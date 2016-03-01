@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;   ListStuff.scm
+;;;;   ListUtil.scm
 ;;;;
 ;;;; Procedures independent of the logical expresions.
 ;;;; Mostly list utilities.

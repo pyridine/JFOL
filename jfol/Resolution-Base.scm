@@ -1,8 +1,6 @@
-(load "ExprUtil.scm")
+(load "FOLUtil.scm")
 (load "Simplification.scm")
 (load "Unification.scm")
-(load "TestExpressions.scm")
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;
 ;;;;;  STRUCTS AND DEFINITIONS

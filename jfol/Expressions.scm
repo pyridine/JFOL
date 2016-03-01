@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;   ExprForm.scm
+;;;;   Expressions.scm
 ;;;;
 ;;;; The abstract representation for propositional formulas,
 ;;;; as well as a few fundamental procedures and queries.
@@ -13,7 +13,7 @@
 ;;;; it, at this stage in the game, would be more work than it's
 ;;;; worth. Unfortunately.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(load "ListStuff.scm")
+(load "ListUtil.scm")
 
 ;;define-record type is specified in SRFI-9, here:
 ;;http://srfi.schemers.org/srfi-9/srfi-9.html

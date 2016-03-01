@@ -4,7 +4,7 @@
 ;;;; Defines a procedure which finds the Most General Unifier
 ;;;; variable substitution for a list of terms.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(load "ExprUtil.scm")
+(load "FOLUtil.scm")
 (load "VariableSubstitution.scm")
 
 ;;Returns the location of the disagreement pair between two ``terms``.

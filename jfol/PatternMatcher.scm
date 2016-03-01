@@ -19,7 +19,7 @@
 ;; Also, remember to use "neg" and not "not" to specify a negation expression.
 ;;
 ;;
-(load "ExprUtil.scm")
+(load "FOLUtil.scm")
 
 ;; Is the symbol a pattern variable?
 (define pattern-variable?
