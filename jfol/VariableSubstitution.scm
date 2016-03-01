@@ -6,6 +6,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (load "FOLUtil.scm")
 
+;;Does expression 1 occur in expression 2?
+(define occurs-in
+  (lambda (x1 x2)
+    (if (equal? x1 x2)
+	#t
+	(cond
+	 ((basic? x2) #f)
+	 ((unary? x2) (occurs-in x1 (get-sh x2)))
+	 ((binary? x2) (or (occurs-in x1 (get-lh x2))
+			   (occurs-in x1 (get-rh x2))))
+	 ((or (function? x2) (relation? x2))
+	     ;;Why aren't macros first-order?!
+	     (eval (cons 'or (map (lambda (le) (occurs-in x1 le)) (get-args x2)))))))))
+
 (define substitution?
   (lambda (s)
     (and

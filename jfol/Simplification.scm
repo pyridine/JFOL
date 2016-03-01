@@ -100,6 +100,13 @@
   (lambda (e)
     (apply-pattern-rules-deep-while connective-equivalence-rules e)))
 
+
+(define strip-quantifiers
+  (lambda (e)
+    (if (quantifier? e)
+	(strip-quantifiers (get-sh e))
+	e)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
 ;;     CNF AND DNF PROCEDURES           ;;
@@ -113,6 +120,25 @@
 ;;Dual Clause form is the inversion of conj/disj.
 
 ;;all these apply-[c/d]nf-[alpha/beta]-rule functions returns a LIST OF CLAUSES to add to the proof
+
+(define strip-quantifiers
+  (lambda (e)
+    (if (quantifier? e)
+	(strip-quantifiers (get-sh e))
+	e)))
+
+;;This is intended to be used in the following manner:
+;;
+;;Before stripping quantifiers from e (before translating it into CNF),
+;;store these quantifiers with list-variables-scoped.
+;;You can add them back this procedure without modifing the list.
+(define add-universal-quantifiers
+  (lambda (e quantlist)
+    (if (null? quantlist)
+	e
+	(universal (car quantlist) (add-universal-quantifiers e (cdr quantlist))))))
+
+
 
 ;;The parent clause, minus the locus from which c1 and c2 resulted,
 ;;is transformed into (<parent items - locus> U {c1,c2})

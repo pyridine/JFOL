@@ -279,8 +279,7 @@
      (if (function? e)
 	 (eval (cons 'and
 		     (map closed-term? (get-args e))))
-	 #t)))
-  )
+	 #t))))
 
 (define atomic?
   (lambda (e)

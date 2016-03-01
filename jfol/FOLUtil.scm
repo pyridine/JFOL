@@ -52,26 +52,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
-;;     BOOLEAN PROCEDURES               ;;
-;;======================================;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;Does expression 1 occur in expression 2?
-(define occurs-in
-  (lambda (x1 x2)
-    (if (equal? x1 x2)
-	#t
-	(cond
-	 ((basic? x2) #f)
-	 ((unary? x2) (occurs-in x1 (get-sh x2)))
-	 ((binary? x2) (or (occurs-in x1 (get-lh x2))
-			   (occurs-in x1 (get-rh x2))))
-	 ((or (function? x2) (relation? x2))
-	     ;;Why aren't macros first-order?!
-	     (eval (cons 'or (map (lambda (le) (occurs-in x1 le)) (get-args x2)))))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;======================================;;
 ;;     DESTRUCTURING PROCEDURES         ;;
 ;;======================================;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -121,24 +101,6 @@
 (define list-relation-names
   (lambda (e)
     (list-excom-by-querget e relation? get-name)))
-
-(define strip-quantifiers
-  (lambda (e)
-    (if (quantifier? e)
-	(strip-quantifiers (get-sh e))
-	e)))
-
-;;This is intended to be used in the following manner:
-;;
-;;Before stripping quantifiers from e (before translating it into CNF),
-;;store these quantifiers with list-variables-scoped.
-;;You can add them back this procedure without modifing the list.
-(define add-universal-quantifiers
-  (lambda (e quantlist)
-    (if (null? quantlist)
-	e
-	(universal (car quantlist) (add-universal-quantifiers e (cdr quantlist))))))
-
 
 ;;Two expressions agree surface-structurally if they are identical but for
 ;;any place where a term must occur.
@@ -238,4 +200,4 @@
 	      " " (cdr (assv (get-type in) bin-sym-string-assoc)) " "
 	          (print-pf (get-rh in))")"))))))
 
-(define pe print-pf) ;;I type this too much
+(define pe print-pf)
