@@ -1,12 +1,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;   ExprUtil.scm
+;;;;   FOLUtil.scm
 ;;;;
 ;;;; Workhorse utilities for FOL expressions.
 ;;;;
 ;;;; For a new basic library, just load this file - it depends on
 ;;;; both the representation file and the list utility file.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(load "ExprForm.scm")
+(load "Expressions.scm")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;

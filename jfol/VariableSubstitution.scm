@@ -4,7 +4,7 @@
 ;;;; Defines variable substitutions for FOL expresions,
 ;;;; as well as functions to use them and combine them.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(load "ExprUtil.scm")
+(load "FOLUtil.scm")
 
 (define substitution?
   (lambda (s)
