@@ -5,7 +5,6 @@
 ;;;; variable substitution for a list of terms.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (load "FOLUtil.scm")
-(load "VariableSubstitution.scm")
 
 ;;Returns the location of the disagreement pair between two ``terms``.
 ;;If there is no disagreement, returns #f.

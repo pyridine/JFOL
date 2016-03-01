@@ -17,7 +17,6 @@
 ;; Make sure you uniqueify the variables before combining your argument steps into the single resolution premise.
 ;;
 (load "FOLUtil.scm")
-(load "VariableSubstitution.scm")
 (load "PatternMatcher.scm")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -30,8 +30,7 @@
   (variable get-variable set-variable)    ;;used to track the variable of quantifiers AND plain variables. JUST A SYMBOL!!!!!
   (name get-name set-name) ;;for functions and relations and constants
   ;;for functions and relations
-  (args get-args set-args)
- )
+  (args get-args set-args))
 
 ;;Every type of expression has an associated symbol.
 ;;These symbols are considered reserved words, but this is not enforced.
@@ -74,7 +73,6 @@
    (cons equiv-t "iff")
    (cons inequiv-t "inequivalent")))
 
-
 ;;Eval this to remind yourself of the major types of expressions
 (define major-types '(Universal Existential Relation Function Constant Variable Negation (Binaries) True False))
 
@@ -104,8 +102,7 @@
 	(if (null? rest-types)
       	    #t
 	    (apply is-type? (cons (get-sh expression) rest-types)))
-	#f
-	)))
+	#f)))
 
 (define true
   (--expression-create atomic-true-sym nil nil))
