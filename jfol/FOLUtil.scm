@@ -371,8 +371,6 @@
 		(apply-substitution (cdr single-sub) d2)))
 	     d1))))))
 
-
-
 (define substitution->string
   (lambda (s)
     (if (null? s)
@@ -384,8 +382,6 @@
 	 (pe (cdar s))
 	 "] "
 	 (substitution->string (cdr s))))))
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
