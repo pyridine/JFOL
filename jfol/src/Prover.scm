@@ -1,5 +1,4 @@
-;;This won't compile in the interpreter: it's only for the compiler.
-(load "Resolution.scm")
+(import resolution)
 
 ;;=====================;;
 ;;     PARSE INPUT     ;;
