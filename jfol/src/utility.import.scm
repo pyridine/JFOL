@@ -234,15 +234,6 @@
 	  '()
 	  (append (car llist) (raise-list (cdr llist))))))
 
-  ;;Supposed to be in srfi 1, but according to csi, it's undefined when I import this module???
-  ;;But when I define it here, it claims to be a redefinition?!
-(define filter
- (lambda (pred list)
-  (cond
-   ((null? list)      null)
-   ((pred (car list)) (cons (car list) (filter pred (cdr list))))
-   (else              (filter pred (cdr list)) ))))
-
   (define remove-if
     (lambda (pred list)
       (filter (lambda (m) (not (pred m))) list)))

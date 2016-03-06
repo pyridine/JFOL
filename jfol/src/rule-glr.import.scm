@@ -6,7 +6,8 @@
 
 (module rule-glr (next-GLR apply-GLR!)
   (import chicken scheme)
-  (import basic-fol)
+  (import srfi-1)
+  (reexport basic-fol)
   (import data-structures)
   (reexport resolution-base)
   (reexport unification)
@@ -165,7 +166,7 @@
 		  (let ((real-GLRs (but-into-GLRs (find-unifications-for-potential-GLRs potential-GLRs) true-list renamed-neg-list)))
 		    (if (null? real-GLRs)
 			#f;; "No GLRs."
-			(car (sort real-GLRs (lambda (a b) (< (length (get-result-line a) (get-result-line b))))))))))))))
+			(car (sort real-GLRs (lambda (a b) (< (length (get-result-line a)) (length (get-result-line b))))))))))))))
 
   (define line-refs-used-by-GLRs
     (lambda (GLRs)
@@ -234,5 +235,4 @@
 				     (list (get-true-parent-line GLR) (get-neg-parent-line GLR) )
 				     justification-string)))
 	  (add-to-rule-record proof GLR-SYMBOL (list GLR))))))
-
   )

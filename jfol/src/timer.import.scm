@@ -5,7 +5,7 @@
 
 
 (module timer (start-timer display-timer)
-  (import chicken scheme (srfi 19) extras utility)
+  (import chicken scheme (srfi 1) (srfi 19) extras utility)
 
   (define __time__list__ (list))
 

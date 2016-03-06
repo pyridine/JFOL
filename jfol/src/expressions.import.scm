@@ -13,7 +13,6 @@
 ;;;; it, at this stage in the game, would be more work than it's
 ;;;; worth. Unfortunately.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (module expressions *
   (import chicken)
   (import scheme)

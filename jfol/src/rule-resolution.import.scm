@@ -6,7 +6,8 @@
 
 (module rule-resolution (next-resolution apply-resolution!)
   (import chicken scheme)
-  (import resolution-base)
+(import srfi-1)
+  (reexport resolution-base)
 
   (define-record-type resolution-record
     (make-resolution-record line1 line2 pivot)

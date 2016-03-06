@@ -8,8 +8,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (module basic-fol *
-  (import chicken)
-  (import scheme)
+  (import chicken scheme)
   (reexport utility)
   (reexport expressions)
     
