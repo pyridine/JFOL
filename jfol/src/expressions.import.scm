@@ -1,3 +1,5 @@
+(declare (unit expressions))
+(declare (uses utility))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;   Expressions.scm
 ;;;;

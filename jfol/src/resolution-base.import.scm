@@ -1,3 +1,4 @@
+(declare (unit resolution-base))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;
 ;;;;;  STRUCTS AND DEFINITIONS

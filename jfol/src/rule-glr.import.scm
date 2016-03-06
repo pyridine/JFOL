@@ -1,3 +1,4 @@
+(declare (unit rule-glr))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;
 ;;;;;  GENERAL LITERAL RESOLUTION RULE

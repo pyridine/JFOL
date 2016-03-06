@@ -1,3 +1,5 @@
+(declare (unit basicfol))
+(declare (uses expressions))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;   FOLUtil.scm
 ;;;;
@@ -9,8 +11,8 @@
 
 (module basic-fol *
   (import chicken scheme)
-  (reexport utility)
-  (reexport expressions)
+  (import utility)
+  (import expressions)
     
     ;;======================================;;
     ;;     HOFS                             ;;

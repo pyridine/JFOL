@@ -1,3 +1,4 @@
+(declare (unit rule-expansion))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;
 ;;;;;  ALPHA AND BETA EXPANSION

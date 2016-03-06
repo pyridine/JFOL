@@ -1,3 +1,4 @@
+(declare (unit resolution))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;
 ;;;;;  THE FINAL MODULE.

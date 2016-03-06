@@ -1,3 +1,4 @@
+(declare (unit timer))
 ;;A little timer utility for measuring lengths of time.
 ;;
 ;;start-timer records the start time for a unique symbol you supply.

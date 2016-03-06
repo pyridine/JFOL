@@ -1,3 +1,4 @@
+(declare (unit simplification))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;   Simplification.scm
 ;;;;

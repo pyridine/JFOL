@@ -1,3 +1,4 @@
+(declare (unit rule-resolution))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;
 ;;;;;  RESOLUTION
