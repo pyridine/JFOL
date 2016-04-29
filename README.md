@@ -1,16 +1,18 @@
 # JFOL
 ### A simple Automated Theorem Prover for First-Order Logic.
 
-This Automated Theorem Prover can determine the validity of arguments given to it in a variation of FOL syntax.
+This Automated Theorem Prover can determine the validity of arguments given to it in FOL.
 
-It proves the tautologicity of arguments with the Resolution method, as described in _First Order Logic and Automated Theorem Proving_, by Melvin Fitting (2nd Ed.). Specifically, it employs a combination of Alpha/Beta Expansion, Resolution, and General Literal Resolution deduction rules to create a Resolution proof. This is nonstandard. Most Resolution provers simplify the input argument completely down into Conjunctive Normal Form and only apply resolution rules. JFOL simplifies each of the argument sentences only as far as reducing the set of binary connectives and converting to Skolem Normal Form, and does not combine argument sentences. This saves some simplification time for large arguments, but I mostly take this approach because it makes the proofs easy to follow with human eyes.
+It proves the tautologicity of arguments with the Resolution method, as described in _First Order Logic and Automated Theorem Proving_, by Melvin Fitting (2nd ed.). Specifically, it employs a combination of Alpha/Beta Expansion, Resolution, and General Literal Resolution deduction rules to create a Resolution proof.
 
-It receives arguments in a certain syntax from stdin, and outputs a proof (or its attempt to find one) to stdout.
+This is nonstandard. Most Resolution provers simplify the input argument completely down into Conjunctive Normal Form and only apply resolution rules. JFOL simplifies each of the argument sentences only as far as reducing the set of binary connectives and converting to Skolem Normal Form, and does not combine argument sentences. This saves some simplification time for large arguments, but I mostly take this approach because it makes the proofs easy to follow with human eyes.
+
+It receives arguments from stdin, and outputs a proof (or its attempt to find one) to stdout.
 
 ## Compilation
 
 I have only compiled and run the project under Ubuntu 15.10 and 16.04, but it should work wherever its dependencies work (see below).
-Once you have the dependencies, it's a simple matter of cloning this repository and making the executable:
+Once you have the dependencies, it's a simple matter of cloning the repository and making the executable:
 
 ````
 git clone git@github.com:pyridine/JFOL.git  
@@ -18,10 +20,13 @@ cd JFOL/jfol
 make
 ````
 
+Although if you don't want to download the whole git repository, I'd recommend you just [download the sources](https://github.com/pyridine/JFOL/archive/master.zip) and make those.
+
 ## Usage
 
 The `jfol` script ties together the parser and the prover. You may need to `chmod +x jfol` in order to use it.
-I have provided several examples of the syntax the prover accepts in `jfol/arguments`. If you wish to see the actual syntax specification, check out `fol.waxeye`.
+I have provided several examples of the syntax the prover accepts in `jfol/arguments`.
+If you wish to see the actual syntax specification, check out `fol.waxeye`.
 
 Here's an example of the syntax JFOL accepts:
 
