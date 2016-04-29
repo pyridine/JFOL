@@ -1,4 +1,0 @@
-Do Androids Think of Electric Proofs? An exploration of Automated Theorem Proving.
-
-Dr. StrangeProof or: How I Learned to Stop Worrying and Let the Computer Do my Math Homework
-
