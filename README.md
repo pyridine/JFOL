@@ -59,7 +59,7 @@ Proof time (seconds): 0.036
 
 As you can see, JFOL presents its proof as a list of numbered steps. Each step consists of a generalized disjunction of sentences expressed in a very Englishy-FOL syntax, with `|` delimiting the disjuncts. The text to the right of the `:` describes the rule with which the step was deduced, and the numbers to the left of the `:` cite the steps with which that rule was applied.
 
-In this example, the first few steps (1-3) are the premises and the negated conclusion (remember that Resolution is proof by contradiction). Steps 4-6 are JFOL's attempts at deriving a contradiction, which it reaches in step 6. I use "-><" as a meaningful substitute for the empty generalized disjunction.
+In this example, the first few steps (1-3) are the premises and the negated conclusion (remember that Resolution is proof by contradiction). Steps 4-6 are JFOL's attempts at deriving a contradiction, which it reaches in step 6. I use "-><-" as a meaningful substitute for the empty generalized disjunction.
 
 I've supplied many example arguments in the `jfol/arguments` directory. They include comments describing the argument and whether it's supposed to be valid. Check 'em out.
 
