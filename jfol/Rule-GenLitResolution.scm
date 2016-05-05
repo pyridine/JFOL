@@ -18,11 +18,6 @@
   (lambda (proof)
     (get-rule-record-assv proof GLR-KNOWN-FAILURES-SYMBOL)))
 
-;;211: we can drop the quantifiers altogether, and work with the list C1, C2, ... CK of clauses containing free variables.
-;;     But remember the quantifiers are implicitly present. So we never work with any clause directly, but rather with
-;;     the result of renaming variables, replacing them with new free variables, effectively applicating Y rule.
-;;     So we apply the Resolution rule to two clauses C1 and C2 containing free variables. 
-
 ;;If it is possible that two expressions can be unified into P and ~P.
 (define potentially-unifiable-to-contradiction?
   (lambda (e1 e2)
@@ -194,16 +189,7 @@
 		(add-to-rule-record proof GLR-KNOWN-FAILURES-SYMBOL (list (car lineref-pairs)))
 		(find-first-GLR proof (cdr lineref-pairs))))))))
 
-;;NEXT GLR
-;;Sort of difficult...
-;;1. List every line of the proof (just references).
-;;2. Remove references that have already been GLR'd (determine by iterating through the GLR records.
-;;3. Construct a list of every possible ordered pair of line references, prioritizing pairs of lines towards the end of the proof.
-;;   ->note: due to the way all-ordered-pairs works, you can't do this lol. But it might help to try to have the last line refs at the car.
-;;4. With find-general-literal-resolution, keep trying to find a pair that has a GLR unification. It will return a #<GLR-record>.
-;;   Stop at the first pair to have a GLR.
-;;5. If one was found, this is the next GLR.
-;;6. If one was not found, #f for failure... Oh, shit, actually for "legacy reasons" we have to return nil.
+;; Returns the next possible GLR application in the proof.
 (define next-GLR
   (lambda (proof)
     (let* ((all-line-refs (range-exclusive (length (get-steps proof))))
@@ -216,12 +202,7 @@
 	   (first-GLR (find-first-GLR proof possible-GLR-pairs)))
       (if first-GLR first-GLR nil))))
 
-;;APPLY GLR:
-;;not difficult. GLR records come with the result line, so simply add the result line to the proof.
-;; .... the annoying bit is printing them. Do I supply a textual representation of the whole substitution?
-;; Well, why don't we start with that... :P
-;; Don't forget to also add the GLR ot the GLR records.
-;; Takes a GLR record, of course.
+;; Applies a GLR to a proof, creating a new step.
 (define apply-GLR!
   (lambda (proof GLR)
     (let ((justification-string  (string-append "General Literal Resolution: " (substitution->string (get-unifier GLR)))))

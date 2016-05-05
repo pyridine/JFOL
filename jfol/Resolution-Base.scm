@@ -24,7 +24,7 @@
 (define-record-type resolution-step
   (make-step formula-list line-justification justification-string)
   resolution-step?
-  (formula-list get-formulas)            ;;A list of pforms
+  (formula-list get-formulas)            ;;A list of formulas
   (line-justification get-justification-lines) ;;A (possibly empty) list of line numbers
   (justification-string get-justification-string set-justification-string))  ;;The type of justification... Make it a string.
 
@@ -38,8 +38,6 @@
   ;;We store the index of the last premise for ease of use
   (last-premise-ref get-last-premise-ref set-last-premise-ref)
   )
-
-;;A list of resolution-records
 
 (define-record-type proof-location
   (make-proof-location line-no disjunct-no)
@@ -80,7 +78,9 @@
     (list-ref (locate-proof-line proof (get-line-no location)) (get-disjunct-no location))))
 
 ;;The number of lines (steps) in the proof.
-;;Silly. But who cares.
+;;Silly definition, but it works....
+;;...I'm not sure why I'm not just using list-len...
+;;...Maybe to show off this silly definition.
 (define proof-num-lines
   (lambda (proof)
     (apply + (map (lambda (x) 1 ) (get-steps proof)))))
@@ -119,7 +119,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;
-;;;;;  UNIMPORTANT PRINTING BULLSHIT
+;;;;;  PRINTING.
 ;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -171,7 +171,6 @@
 
 (define success-emoticons
   (list "-><-")
-  ;;(list ":D" ":3" "^_^" "8^y" "TvT" "^w^" "^3^" "=]" "B^D" "8D" "=D" "=-3" ":-)" "<3")
   )
 
 (define step-to-formula-string
@@ -213,3 +212,4 @@
 		 (pad-string-list (map step-to-justification-line-list steps))) ;;2. Lines due
 	    (map (lambda (x) (string-append x "\n"))
 		 (map step-to-justification-string steps))))))) ;;3. Justification
+

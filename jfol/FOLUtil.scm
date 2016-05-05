@@ -1,10 +1,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;   FOLUtil.scm
 ;;;;
-;;;; Workhorse utilities for FOL expressions.
+;;;; Fundamental utilities for FOL expressions.
 ;;;;
-;;;; For a new basic library, just load this file - it depends on
-;;;; both the representation file and the list utility file.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (load "Expressions.scm")
 
@@ -24,11 +22,13 @@
 	 (list-ref (get-args term) (car location))
 	 (cdr location)))))
 
+;;"excom" stands for "expression components". I am a great function namer, I know.
+
 ;;A HOF used to list components of a FOL expression.
 ;;This can't do anything involving the structure the expression is contained in.
 ;;See its usage.
 ;;Func is a function of a SINGLE expression that returns either #f or <value>,
-;;where <value> is the thing you want strung into the listtttt......
+;;where <value> is the thing you want strung into the list.....
 (define list-excom-by-func
   (lambda (e func)
     (let* ((res (func e))
@@ -60,7 +60,7 @@
 ;;EG: All[X](Loves(Mary,Y)) will return (Y)
 ;;The list of variables that quantifiers scope over in an expression.
 ;;EG: All[X]Exists[Z](Loves(M,Y)) will return (X Z)
-;;WARNING: If a variable occurs both free and bound in the expresion,
+;;  WARNING: If a variable occurs both free and bound in the expresion,
 ;;this algorithm has no way of differentiating between them.
 ;;Make variable names unique before applying this.
 (define list-variables-instantiated
@@ -69,7 +69,7 @@
 
 ;;The list of variables that quantifiers scope over in an expression.
 ;;EG: All[X]Exists[Z](Loves(M,Y)) will return (X Z)
-;;WARNING: If a variable occurs both free and bound in the expresion,
+;;  WARNING: If a variable occurs both free and bound in the expresion,
 ;;this algorithm has no way of differentiating between them.
 ;;Make variable names unique before applying this.
 (define list-variables-scoped
@@ -77,7 +77,7 @@
     (list-excom-by-querget e quantifier? get-variable)))
 
 ;;Returns a list of the free variables in e.
-;;WARNING: If a variable occurs both free and bound in the expresion,
+;;  WARNING: If a variable occurs both free and bound in the expresion,
 ;;this algorithm has no way of differentiating between them.
 ;;Make variable names unique before applying this.
 (define list-free-variables
@@ -102,31 +102,6 @@
   (lambda (e)
     (list-excom-by-querget e relation? get-name)))
 
-;;Two expressions agree surface-structurally if they are identical but for
-;;any place where a term must occur.
-;;Terms occur inside relations and nowhere else.
-(define agree-term-locations?
-  (lambda (e1 e2)
-	  (cond
-	   ;;Two terms agree structurally. A term and a non-term do not agree.
-	   ((term? e1) (term? e2))
-	   ;;Two non-terms of different types do not agree.
-	   ((not (equal? (get-type e1) (get-type e2))) #f)
-	   ;;Two negations agree if their expressions agree.
-	   ((negation? e1) (agree-term-locations? (get-sh e1) (get-sh e2)))
-	   ;;Quantifiers agree if they have the same variable and their expressions agree. 
-	   ((or (existential? e1) (universal? e1)) (and (equal? (get-variable e1) (get-variable e2))
-							(agree-term-locations? (get-sh e1) (get-sh e2))))
-	   ;;Two relations agree if they have the same name and arity. (We assume both are well-formed; i.e., they consist of terms.)
-	   ((relation? e1) (and (relation? e2)
-				(equal? (get-name e1) (get-name e2))
-				(equal? (get-arity e1) (get-arity e2))))
-	   ;;Two binaries agree if they are of the same type (checked above) and their expressions agree.
-	   ((binary? e1) (and
-			  (agree-term-locations? (get-lh e1) (get-lh e2))
-			  (agree-term-locations? (get-rh e1) (get-rh e2))))
-	   (else #f))))
-
 (define list-surface-terms
   (lambda (e)
     (cond
@@ -135,8 +110,6 @@
      ((unary? e) (list-surface-terms (get-sh e)))
      ((binary? e) (append (list-surface-terms (get-lh e))
 			  (list-surface-terms (get-rh e)))))))
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;======================================;;
@@ -183,6 +156,32 @@
 ;;     VARIABLE SUBSTITUTION            ;;
 ;;======================================;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;Two expressions agree surface-structurally if they are identical but for
+;;any place where a term must occur.
+;;Terms occur inside relations and nowhere else.
+(define agree-term-locations?
+  (lambda (e1 e2)
+	  (cond
+	   ;;Two terms agree structurally. A term and a non-term do not agree.
+	   ((term? e1) (term? e2))
+	   ;;Two non-terms of different types do not agree.
+	   ((not (equal? (get-type e1) (get-type e2))) #f)
+	   ;;Two negations agree if their expressions agree.
+	   ((negation? e1) (agree-term-locations? (get-sh e1) (get-sh e2)))
+	   ;;Quantifiers agree if they have the same variable and their expressions agree. 
+	   ((or (existential? e1) (universal? e1)) (and (equal? (get-variable e1) (get-variable e2))
+							(agree-term-locations? (get-sh e1) (get-sh e2))))
+	   ;;Two relations agree if they have the same name and arity. (We assume both are well-formed; i.e., they consist of terms.)
+	   ((relation? e1) (and (relation? e2)
+				(equal? (get-name e1) (get-name e2))
+				(equal? (get-arity e1) (get-arity e2))))
+	   ;;Two binaries agree if they are of the same type (checked above) and their expressions agree.
+	   ((binary? e1) (and
+			  (agree-term-locations? (get-lh e1) (get-lh e2))
+			  (agree-term-locations? (get-rh e1) (get-rh e2))))
+	   (else #f))))
+
 ;;Does expression 1 occur in expression 2?
 (define occurs-in
   (lambda (x1 x2)
@@ -371,6 +370,13 @@
 		(apply-substitution (cdr single-sub) d2)))
 	     d1))))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;======================================;;
+;;     PRINTING                         ;;
+;;======================================;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Print out the substitution all nicely for the output
 (define substitution->string
   (lambda (s)
     (if (null? s)
@@ -382,12 +388,6 @@
 	 (pe (cdar s))
 	 "] "
 	 (substitution->string (cdr s))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;======================================;;
-;;     PRINTING......                   ;;
-;;======================================;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;A string represerntation of a propositional formula.
 (define print-pf
@@ -413,4 +413,5 @@
 	      " " (cdr (assv (get-type in) bin-sym-string-assoc)) " "
 	          (print-pf (get-rh in))")"))))))
 
+;;Shorthand for use in the REPL
 (define pe print-pf)

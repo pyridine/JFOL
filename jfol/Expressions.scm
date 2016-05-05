@@ -1,64 +1,83 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;   Expressions.scm
 ;;;;
-;;;; The abstract representation for propositional formulas,
+;;;; The abstract representation for FOL formulas,
 ;;;; as well as a few fundamental procedures and queries.
 ;;;;
-;;;; I strongly dislike this representation and believe that
-;;;; it abstracts FOL incredibly poorly. Not only that, but its
-;;;; complicated nature has led to a complication of the codebase,
-;;;; and in turn an increase in the number of bugs in development.
+;;;; In retrospect, I dislike this representation for expressions
+;;;; of FOL. I think it abstracts their structure pretty poorly.
+;;;; What you see here is an extension of an abstraction for
+;;;; expressions of propositional logic. That one was fine, but
+;;;; I have essentially glued FOL onto it. The result is an
+;;;; overly complicated structure that has made functions that
+;;;; must deal with the representation directly (e.g., pattern 
+;;;; matching) much more complicated than they need to be, and 
+;;;; thus much more prone to bugs.
 ;;;;
-;;;; But to change it, and to change everything that depends on
-;;;; it, at this stage in the game, would be more work than it's
-;;;; worth. Unfortunately.
+;;;; At this late stage of the game it is more trouble than it's
+;;;; worth to change it.
+;;;;
+;;;; But, for the record, here is how I might represent expressions
+;;;; now:
+;;;;
+;;;; struct expression {
+;;;;    symbol type;
+;;;;    symbol modifier;
+;;;;    expression arguments[];
+;;;; };
+;;;;
+;;;; expression  variable = {'var', <var name>, nil}
+;;;; expression  function = {'fun', <fun name>, {<expression>}+}
+;;;; expression    binary = {'bin', 'AND', {<expression>, <expression>}}
+;;;; expression universal = {'all', <var name>, <expression>}
+;;;;
+;;;; and so on.
+;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (load "ListUtil.scm")
 
-;;define-record type is specified in SRFI-9, here:
-;;http://srfi.schemers.org/srfi-9/srfi-9.html
+;;define-record type is specified in SRFI-9, here: http://srfi.schemers.org/srfi-9/srfi-9.html
 (define-record-type expression
   (--expression-create type lh-expression rh-expression)
   expression?
-  ;;See type list, below. The type of expression.
+  ;;The type of expression.
   (type get-type)
-  ;;PF features
+  ;;Propositional Logic features
   (lh-expression get-lh set-lh)
-  (lh-expression get-sh set-sh) ;;for unary preds and quantifiers.
+  (lh-expression get-sh set-sh)        ;;for unary preds and quantifiers.
   (rh-expression get-rh set-rh)
   ;;FOL features
-  (variable get-variable set-variable)    ;;used to track the variable of quantifiers AND plain variables. JUST A SYMBOL!!!!!
-  (name get-name set-name) ;;for functions and relations and constants
+  (variable get-variable set-variable) ;;used to track the variable of quantifiers AND plain variables.
+  (name get-name set-name)             ;;for functions, relations and constants
   ;;for functions and relations
   (args get-args set-args))
 
 ;;Every type of expression has an associated symbol.
-;;These symbols are considered reserved words, but this is not enforced.
+;;These symbols are considered reserved words.
 (begin
 ;;First Order Logic types
   (define universal-t 'ALL)
   (define existential-t 'EXISTS)
   (define relation-t 'RELATION)
   (define function-t 'FUNCTION)
-  (define constant-t 'CONSTANT) ;;Substitute for Sentential "Letter"s.
+  (define constant-t 'CONSTANT) 
   (define variable-t 'VARIABLE)
-;;Sentential Calculus inherited types
+;;Propositional Logic types
   (define not-t 'NOT)
   (define and-t 'AND)
   (define or-t  'OR)
   (define imp-t 'IMP)
   (define revimp-t 'REVIMP)
-  (define nand-t 'NAND)         ;;NAND IS UP-ARROW!!!
-  (define nor-t 'NOR)           ;;NOR IS DOWN-ARROW!!!
+  (define nand-t 'NAND)         
+  (define nor-t 'NOR)          
   (define notimp-t 'NOTIMP)
   (define notrevimp-t 'NOTREVIMP)
   (define equiv-t 'EQUIV)
   (define inequiv-t 'INEQUIV)
   (define atomic-true-sym '-PFATOMICTRUE)
   (define atomic-false-sym '-PFATOMICFALSE))
-;;(define letter-t 'LETTER) ;;This is unused in FOL.
 
-;;Association list between byn-syms and nicely printable strings.
+;;Association list between binary expression identifier symbols and nicely printable strings.
 (define bin-sym-string-assoc
   (list
    (cons not-t "not")
@@ -73,18 +92,14 @@
    (cons equiv-t "iff")
    (cons inequiv-t "inequivalent")))
 
-;;Eval this to remind yourself of the major types of expressions
-(define major-types '(Universal Existential Relation Function Constant Variable Negation (Binaries) True False))
-
 ;; A listing of each binary expression type.
 (define binary-types
   (list and-t or-t imp-t revimp-t nand-t nor-t
 	notimp-t notrevimp-t equiv-t inequiv-t))
 
 ;;A recursive type predicate.
-;;Unless you are asking for a multiple-type expression or a specific
-;;binary expression, it is better to use a type's type? predicate,
-;;which are all defined below.
+;;(Unless you are asking for a multiple-type expression or a specific
+;;binary expression, it is better to use a type's `type?` predicate)
 ;;
 ;;usage:
 ;;        * (is-type? expr or-t)
@@ -95,14 +110,13 @@
 ;;
 ;;Pass arguments in order of descending major connective.
 ;;When asked for a deeper predicate after a binary predicate, only the LH expression will be checked.
-;;
 (define is-type?
   (lambda (expression type . rest-types)
     (if (equal? (get-type expression) type)
-	(if (null? rest-types)
-      	    #t
-	    (apply is-type? (cons (get-sh expression) rest-types)))
-	#f)))
+      (if (null? rest-types)
+        #t
+        (apply is-type? (cons (get-sh expression) rest-types)))
+      #f)))
 
 (define true
   (--expression-create atomic-true-sym nil nil))
@@ -117,6 +131,8 @@
   (lambda (x) (equal? x false)))
 
 ;; Functions for creating and querying expressions follow.
+;;
+
 (define negation
   (lambda (pf-expression)
     (--expression-create not-t pf-expression nil)))
@@ -177,9 +193,8 @@
   (lambda (expr)
     (is-type? expr constant-t)))
 
-;;Don't use this.
 ;;Because creating a function and a relation is essentially the same thing,
-;;I provide this higher function...
+;;I provide this higher function for the `function` and `relation` constructors below.
 (define --function-or-relation
   (lambda (type name first . rest)
     (let ((newfunc (--expression-create type nil nil)))
@@ -216,8 +231,8 @@
   (lambda (expr)
     (is-type? expr relation-t)))
 
-;;The arity of a function or relation is not stored separately.
-;;Be cautious when you modify a function or relation's
+;;The arity of a function or relation is not explicitly stored,
+;;So be cautious when you modify a function or relation's
 ;;expression list (expr-list).
 (define get-arity
   (lambda (func-or-rel)
@@ -227,7 +242,7 @@
 ;;Specific functions: lh-expr, rh-expr
 (define binary?
   (lambda (expr)
-    ;;For some fucking reason you can't apply `or`
+    ;;Macros aren't first-order!!!! :(
     (eval (cons 'or
 	   (map (lambda (x) (is-type? expr x)) binary-types)))))
 
@@ -238,8 +253,6 @@
     (or (universal? expr) (existential? expr) (negation? expr))))
 
 ;;Expresions with names.
-;;Relations, functions, and constants have names.
-;;VARIABLES DO NOT HAVE NAMES...
 (define named?
   (lambda (expr)
     (or
@@ -271,12 +284,12 @@
 (define closed-term?
   (lambda (e)
     (and
-     (term? e)
-     (not (variable? e))
-     (if (function? e)
-	 (eval (cons 'and
-		     (map closed-term? (get-args e))))
-	 #t))))
+      (term? e)
+      (not (variable? e))
+      (if (function? e)
+        (eval (cons 'and
+                    (map closed-term? (get-args e))))
+        #t))))
 
 (define atomic?
   (lambda (e)
@@ -313,4 +326,4 @@
 (define all universal)
 (define for-all universal)
 
-(define neg negation) ;;DON'T FUCKING DEFINE "not" AS NEGATION!!!!!!! YOU OVERRIDE BUILT-IN NOT!
+(define neg negation) ;;DON'T DEFINE `not` AS NEGATION! YOU WILL OVERRIDE THE BUILT-IN `not`! THAT IS VERY BAD!

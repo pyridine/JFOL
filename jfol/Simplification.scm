@@ -6,6 +6,9 @@
 ;;;; See the very end of this file for procedures like
 ;;;; "standard-form", which are the culmination of the procedures
 ;;;; and rule-sets defined in this file.
+;;;;
+;;;; These methods rely very heavily on the pattern matcher.
+;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;  WARNING!!!
@@ -38,8 +41,7 @@
     (neg (neg ?a))           (?a)
     ))
 
-(define prenex-rules
-  '(
+(define prenex-rules '(
     (neg (universal ?x ?e))             (existential ?x (neg ?e))   
     (neg (existential ?x ?e))           (universal ?x (neg ?e))   
     (binary ?c (universal ?x ?a) ?b)    (universal ?x (binary ?c ?a ?b))
@@ -49,8 +51,8 @@
     ))
 
 ;;These a/b rulesets assume the input sentence only consists of NOT, OR, and AND.
-(define alpha-component-rules-multimatch
-  '((binary AND ?a ?b)           ((?a)     (?b))
+(define alpha-component-rules-multimatch '(
+    (binary AND ?a ?b)           ((?a)     (?b))
     (neg (binary OR ?a ?b))      ((neg ?a) (neg ?b))
     (neg (binary IMP ?a ?b))     ((?a)     (neg ?b))
     (neg (binary REVIMP ?a ?b))  ((neg ?a) (?b))
@@ -60,8 +62,7 @@
     (binary NOTREVIMP ?a ?b)     ((neg ?a) (?b))
     ))
 
-(define beta-component-rules-multimatch
-  '(
+(define beta-component-rules-multimatch '(
     (binary OR ?a ?b)               ((?a) (?b)) 
     (neg (binary AND ?a ?b))        ((neg ?a) (neg ?b))
     (binary IMP ?a ?b)              ((neg ?a) (?b))
@@ -196,25 +197,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;EVERY ALGORITHM THAT FOLLOWS IN THIS SECTION ASSUMES E IS IN PRENEX FORM. Otherwise skolemization is waaayyyyy too difficult.
-;;also assumes e's connectives have been reduced, but I don't think this is a strict requirement?
+;;
+;;also assumes e's connectives have been reduced, but I don't think this is a strict requirement.
+;;
 ;;If properly skolemized, the delta rule is never needed in a proof!
 ;;WARNING: Skolemnization introduces symbols. Because I will only be skolemnizing the !single! premise
 ;;         of any solving procedure, these symbols will only be new to the input expression.
-;;
-;;The algorithm follows.
-;;
-;;############################################################
-;;1. e is in prenex form. (all quantifiers occur "first")
-;;2. e's connectives have been reduced.
-;;############################################################
-;;1. Locate the first existential form. Let its scoped variable be called "E".
-;;2. Replace that existential subexpression from e with garbage in a new expression, `e.
-;;3. list all scoped variables in `e (variables occuring as the sig of the quantifiers of the expression. This will be all universally quantified variables that occurred before the existential, because this is the FIRST existential form and e is in prenex.) Call this list [x1,x2,...,xn]
-;;4. If that list is nil, then create a new constant symbol that does not occur in the expression. Call it C.
-;;5. Create a function symbol that is new to the expression. The caveat of 4 applies as well. Call it f.
-;;4. Create a variable-substitution (different from pattern substitutions) ($E . f([C/x1,x2...xn]) ) . (I.e., a function of either that new constant, or each of the variables.)
-;;5. Remove that first existential subexpression from e.
-;;5. Apply the variable substitution to e.
 
 (define first-existential-variable
   (lambda (e)
@@ -226,7 +214,6 @@
 
 ;;Assumes there is in fact a first existential expression,
 ;;and replaces it, in its entirety, with a garbage constant.
-;;Will fuck up if e doesn't meet the assumptions. (prenex is another.)
 (define sklurge-first-existential
   (lambda (e)
     (if (existential? e)
@@ -270,11 +257,6 @@
 ;;==================================================================;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; WARNING:
-;;
-;; Turning an expression into clause-form before applying resolution seems
-;; to slurp crucial information for the resolution itself.
-
 (define clause-form-to-expression
   (lambda (c) ;;clause form is a conjunction of disjunctions.
     (string-proposition-list 'and (map (lambda (sc) (string-proposition-list 'or sc)) c))))
@@ -297,10 +279,6 @@
 ;;Applies all the simplification rules
 ;;I'm using for the FOL solver.
 ;;Semantically, (standard-form e) is satisfiable if and only if e is.
-;;A valid expression.
 (define standard-form
   (lambda (e)
     (skolemize (prenex (reduce-connectives e)))))
-
-;;;;INCREDIBLY IMPORTANT NOTE:
-;;;;   CONVERTING THE SENTENCE TO CNF MIGHT LEAVE IN THE DUST A STEP THAT WAS NECESSARY FOR RESOLUTION!

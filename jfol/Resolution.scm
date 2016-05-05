@@ -3,11 +3,11 @@
 (load "Rule-Resolution.scm")
 (load "Rule-GenLitResolution.scm")
 (load "Rule-Expansion.scm")
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;
-;;;;;  PROOFING BY RULESET.
+;;;;;  PROOFING BY A LIST OF DEDUCTION RULES.
 ;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;The rules.
 (define resolution-rule                  (cons next-resolution apply-resolution!))

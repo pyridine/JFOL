@@ -11,7 +11,6 @@
 ;;A term location is a list (n1 n2 n3 ... nn) of numbers, where each
 ;;  number is which index to descend in while traversing the terms.
 ;;[terms = variables, constants, and functions of other terms.
-;; NOT... RELATIONS...!!!!!]
 (define disagreement-pair
   (letrec ((recur
 	    (lambda (t1 t2 location-so-far)
@@ -83,10 +82,8 @@
 	(if (and (term? s1) (term? s2))
 	    (recur s1 s2 '())
 	    #f))))) ;;Can't unify two non-terms.
-
   
 ;;Returns a variable substitution which unifies e1 and e2, or #f if there is none.
-;;I think this is a really clever idea.
 ;;We create two new functions (the names don't matter) off of the terms of both expressions,
 ;;and we then attempt to unify these two functions! We don't need to write anything new!
 (define unify-two-expressions
@@ -123,7 +120,7 @@
   (lambda (first second . rest)
     (apply unify-n-terms
 	   (map (lambda (x)
-		  (apply  function (cons 'Wes-Anderson (list-surface-terms x)))) ;;SOMETHING IS HORRIBLY WRONG WITH THIS.......
+		  (apply  function (cons 'Wes-Anderson (list-surface-terms x))))
 		(cons first (cons second rest))))))
 
 

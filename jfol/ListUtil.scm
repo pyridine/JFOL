@@ -11,7 +11,7 @@
 ;;And sometimes I like "null"
 (define null '())
                 
-;;For some fucking reason, csi from the terminal doesn't recognize "filter",
+;;For some reason, csi from the terminal doesn't recognize "filter",
 ;;but from within Emacs/Geiser it does???
 (define filter
   (lambda (pred list)
@@ -35,7 +35,6 @@
             #t
             (member? item (cdr list))))))
  
-
 ;;Removes all occurence of item from the surface of the list.
 (define remove-all
   (lambda (item list)
@@ -201,8 +200,7 @@
      (cdr pair)
      (car pair))))
 
-;;Isn't it funny?
-;;If you take the result from all-unique-pairs and add, for each pair, its reverse - that this is all ordered pairs?
+;;If you take the result from all-unique-pairs and add, for each pair, its reverse, this is all the ordered pairs.
 ;;Hahaha. Easy peasy.
 ;;DOES NOT RETURN ANY PAIR OF AN ITEM WITH ITSELF (where "item" means an index in the list.)
 (define all-ordered-pairs
@@ -268,20 +266,23 @@
 			     new-sym)))))
       (sym-iterator base-symbol 1))))
 
+;;A very useful HOF.
 ;;Applies the given function onto the argument until the argument no longer changes.
 ;;If the function returns #f, this is taken to mean that the function failed to apply.
 (define apply-until-stasis
   (lambda (function argument)
     (let ((previous argument)
-	  (next argument))
-      (letrec ((recurse (lambda ()
-			  (begin
-			    (set! previous next)
-			    (set! next (let ((res (function previous))) (if res res previous)))
-			    (if (equal? next previous)
-				next
-				(recurse))))))
-	(recurse)))))
+          (next argument))
+      (letrec (
+        (recurse 
+          (lambda ()
+            (begin
+              (set! previous next)
+              (set! next (let ((res (function previous))) (if res res previous)))
+              (if (equal? next previous)
+                next
+                (recurse))))))
+        (recurse)))))
 
 ;;replacement shall be the new list that symbol is associated with.
 (define replace-assv

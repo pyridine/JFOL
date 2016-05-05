@@ -2,6 +2,7 @@
 ;;
 ;;start-timer records the start time for a unique symbol you supply.
 ;;display-timer takes that same symbol and `display`s the time difference from the start, converted to seconds.
+
 (define __time__list__ (list))
 
 (define start-timer

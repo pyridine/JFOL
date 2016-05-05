@@ -9,15 +9,12 @@
 ;; WARNING
 ;; ==============================
 ;;
-;; Match and Replace patterns unfortunately, do not have the same syntax.
+;; Match and Replace patterns unfortunately, do not have quite the same syntax.
 ;; Here are the differences:
 ;;
 ;;   1. In a Match pattern, writing '(binary IMP ?a ?b) is fine.
 ;;      But in a Replace pattern, binary types must be re-quoted: '(binary 'OR (neg ?b) ?a)
 ;;      I believe this also applies to any other cadr-named expression, like quantifiers, relations, functions....
-;;
-;; Also, remember to use "neg" and not "not" to specify a negation expression.
-;;
 ;;
 (load "FOLUtil.scm")
 
@@ -85,8 +82,8 @@
 		    #f)))))
     (lambda (pat expr answers)
       (cond
-       ((null? pat) #f) ;;;;;uuuhhhh...
-       ((null? expr) #f);;;;;;;;;;;;;;;
+       ((null? pat) #f) 
+       ((null? expr) #f)
        ;; ANYTHING AT ALL
        ((pattern-variable? pat)
 	(attempt-add-answer pat expr answers))
@@ -193,9 +190,7 @@
 ;;Takes a pattern, a substitution (one made with expr-match?, I'd hope),
 ;;and returns a pattern with all substitutions made. A symbol.
 ;;Will replace #<expression>s with their symbolic counterparts.
-;;If all substitutions are filled, you can (eval result) into anX #<expression>!!
-;;That should turn out to be an incredibly powerful procedure.
-;;Basically taken entirely from Schematics of Computation ch 10. Really puts my code to shame :P
+;;If all substitutions are filled, you can (eval result) into an #<expression>!!
 (define expr-pattern-substitute
   (lambda (pattern substitution)
     (letrec
@@ -252,7 +247,7 @@
        (if superbase superbase #f))
      ;;Another base case: if e is basic.
      (if (basic? e)
-	 (let ((nexp (apply-pattern-rule match replace e))) e) ;;NOT DEEP! infinite recursion, again. Don't code tired. Fuck.
+	 (let ((nexp (apply-pattern-rule match replace e))) e) ;;NOT DEEP! infinite recursion, again. Don't code tired.
 	 #f)
      (if (unary? e)
 	 (let ((nexp (apply-pattern-rule-deep match replace (get-sh e))))
